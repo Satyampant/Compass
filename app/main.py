@@ -26,6 +26,7 @@ log = logging.getLogger("compass")
 async def lifespan(_: FastAPI):
     """Migrate, then start the scheduler and the Telegram poller unless switched off."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)  # request URLs carry the bot token
     migrate.upgrade()
     scheduler.startup()
     threads = []

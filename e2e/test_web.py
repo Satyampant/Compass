@@ -15,6 +15,12 @@ def card(page, column, title):
     return page.locator(f"section.col[aria-label='{column}'] .kcard", has_text=title)
 
 
+def settle(page):
+    """Wait until the move's API calls, and the refetches they trigger, have finished."""
+    page.wait_for_timeout(50)
+    page.wait_for_function("window.__inflight === 0")
+
+
 def drag(page, source, column):
     box = source.bounding_box()
     target = page.locator(f"section.col[aria-label='{column}']").bounding_box()
@@ -23,6 +29,7 @@ def drag(page, source, column):
     page.mouse.move(box["x"] + 40, box["y"] + 20, steps=4)
     page.mouse.move(target["x"] + target["width"] / 2, target["y"] + 60, steps=12)
     page.mouse.up()
+    settle(page)
 
 
 def test_first_day_prompt(page):
@@ -78,6 +85,7 @@ def test_every_move_by_clicks_and_by_drag(page):
     drag(page, card(page, "Inbox", "drag.example.com"), "Learning")
     expect(page.locator(".toast")).to_contain_text("Book it first")
     drag(page, card(page, "Inbox", "drag.example.com"), "Booked")
+    expect(card(page, "Booked", "drag.example.com")).to_be_visible()
     drag(page, card(page, "Booked", "drag.example.com"), "Learning")
     expect(card(page, "Learning", "drag.example.com")).to_be_visible()
     drag(page, card(page, "Learning", "drag.example.com"), "Learned")

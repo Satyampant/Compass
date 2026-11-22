@@ -9,6 +9,11 @@ from playwright.sync_api import sync_playwright
 PORT = 8765
 BASE = f"http://127.0.0.1:{PORT}"
 SHOTS = os.environ.get("COMPASS_SHOTS")
+INFLIGHT = """
+window.__inflight = 0;
+const f = window.fetch;
+window.fetch = (...a) => { window.__inflight++; return f(...a).finally(() => window.__inflight--); };
+"""
 
 
 @pytest.fixture(scope="session")
@@ -44,6 +49,7 @@ def browser():
 @pytest.fixture
 def page(browser, server):
     context = browser.new_context(viewport={"width": 1360, "height": 900})
+    context.add_init_script(INFLIGHT)
     pg = context.new_page()
     pg.goto(server)
     pg.wait_for_selector(".pagehead")

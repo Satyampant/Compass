@@ -10,3 +10,5 @@ input[type=datetime-local]{display:block;width:100%;border:1px solid var(--line)
 .addtask input[type=text]{flex:1}
 .addtask input[type=number]{width:84px}
 .welcome{margin-top:20px}
+/* The mockup's page-heading .over rule also matches a drop-target column. Keep the column's layout still while dragging. */
+.col.over{display:flex;align-items:stretch;margin-bottom:0;color:inherit}

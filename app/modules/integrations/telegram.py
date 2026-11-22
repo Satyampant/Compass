@@ -14,7 +14,9 @@ class Telegram:
 
     def __init__(self, token: str, client: httpx.Client | None = None):
         self.base = f"https://api.telegram.org/bot{token}"
-        self.client = client or httpx.Client(timeout=40)
+        self.client = client or httpx.Client(
+            timeout=30
+        )  # long poll is 25s; a dead socket after sleep fails fast
 
     def call(self, method: str, **params):
         """Call a Bot API method and return its result."""
