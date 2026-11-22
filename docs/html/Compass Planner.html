@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compass Planner</title>
+<style>
+/* Layout idea: a quiet paper desk. One green ink, one rust for attention. Goals are small dots, never coloured blocks. Detail lives in dialogs, so each screen holds a few calm cards. */
+:root{
+  --paper:#f8f7f2; --surface:#fffefa; --rail:#efeee6; --soft:#eeeee5;
+  --ink:#24382e; --muted:#667065; --line:#dcddd2; --hair:#e8e9df;
+  --accent:#2d4a38; --accent-soft:#dde4d4; --btn-ink:#ffffff;
+  --rust:#b3613a; --rust-soft:#f4e4d8;
+  --g1:#7d9479; --g2:#6f8a9a; --g3:#bd8163; --g4:#a98e55; --g5:#96788f;
+  --serif:Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#131915; --surface:#1a211c; --rail:#161c18; --soft:#222a24;
+    --ink:#e3e8dd; --muted:#98a295; --line:#2d362f; --hair:#252d27;
+    --accent:#a9c4a5; --accent-soft:#27352b; --btn-ink:#131915;
+    --rust:#dd9166; --rust-soft:#3a2a1f;
+    --g1:#8fa98a; --g2:#86a3b4; --g3:#d09474; --g4:#c2a668; --g5:#b092a8;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131915; --surface:#1a211c; --rail:#161c18; --soft:#222a24;
+  --ink:#e3e8dd; --muted:#98a295; --line:#2d362f; --hair:#252d27;
+  --accent:#a9c4a5; --accent-soft:#27352b; --btn-ink:#131915;
+  --rust:#dd9166; --rust-soft:#3a2a1f;
+  --g1:#8fa98a; --g2:#86a3b4; --g3:#d09474; --g4:#c2a668; --g5:#b092a8;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.5 var(--sans)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0;text-align:left}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--rust);outline-offset:3px;border-radius:4px}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{font-family:var(--serif);font-weight:400;text-wrap:balance;overflow-wrap:anywhere}
+h1{font-size:clamp(34px,3.4vw,52px);letter-spacing:-.035em;line-height:1.08}
+h2{font-size:24px;letter-spacing:-.025em;line-height:1.15}
+h3{font-size:19px;letter-spacing:-.015em;line-height:1.25}
+svg.ic{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.kicker{font:600 10px/1.4 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* Shell */
+.shell{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--rail);border-right:1px solid var(--line);padding:32px 18px 22px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px;font:400 28px var(--serif);letter-spacing:-.04em}
+.brand svg{width:30px;height:30px;color:var(--accent)}
+.navgroup{margin-top:30px}
+.navgroup:first-of-type{margin-top:40px}
+.navgroup .kicker{margin:0 12px 9px}
+.nav{display:flex;align-items:center;gap:12px;padding:9px 12px;margin:2px 0;border-radius:7px;font-size:13px;font-weight:500}
+.nav:hover{background:var(--soft)}
+.nav.active{background:var(--accent-soft);font-weight:650}
+.nav .count{margin-left:auto;font:11px var(--mono);color:var(--muted)}
+.profile{margin-top:auto;border-top:1px solid var(--line);padding:18px 6px 0;display:flex;align-items:center;gap:11px}
+.avatar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--accent-soft);border:1px solid var(--line);font:14px var(--serif)}
+.profile b{font-size:13px;font-weight:600}
+.profile small{display:block;color:var(--muted);font-size:11px}
+.main{width:100%;max-width:1240px;margin:0 auto;padding:0 clamp(18px,3.4vw,52px) 56px;align-self:start}
+.bar{height:74px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.crumb{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted)}
+.crumb strong{color:var(--ink);font-weight:600}
+.menu{display:none;padding:5px}
+.tools{display:flex;gap:9px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:7px;padding:9px 14px;font-size:12px;font-weight:600;line-height:18px;white-space:nowrap}
+.btn svg{width:15px;height:15px}
+.btn.primary{background:var(--accent);color:var(--btn-ink)}
+.btn.primary:hover{opacity:.9}
+.btn.outline{border:1px solid var(--line);background:var(--surface)}
+.btn.outline:hover{border-color:var(--muted)}
+.btn kbd{font:10px var(--mono);border:1px solid currentColor;border-radius:3px;padding:0 4px;opacity:.7}
+.link{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 6px;border-radius:5px;color:var(--accent)}
+.link:hover{background:var(--soft)}
+.link svg{width:14px;height:14px}
+
+/* Page */
+.pagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:30px 0 24px}
+.over{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:var(--rust)}
+.over svg{width:15px;height:15px}
+.pagehead>span{font:11px var(--mono);color:var(--muted);margin-bottom:5px;text-align:right}
+.lead{color:var(--muted);font-size:14px;max-width:62ch;margin:-10px 0 22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px;margin-top:20px}
+.cols.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:20px}
+.stack{display:grid;gap:20px;align-content:start}
+.support{font-size:12px;color:var(--muted);margin:6px 0 4px}
+.section{margin-top:20px}
+.sub-k{margin:18px 0 2px}
+
+/* Focus */
+.focus{position:relative;overflow:hidden;background:var(--accent-soft);border:1px solid var(--line);border-radius:12px;padding:28px 30px;min-height:200px;display:flex;align-items:center}
+.focus canvas{position:absolute;right:0;bottom:0;width:58%;height:100%;pointer-events:none}
+.focuscopy{position:relative;max-width:60%}
+.focus .kicker{display:flex;align-items:center;gap:7px}
+.focus h2{font-size:clamp(26px,2.4vw,38px);margin:10px 0 4px}
+.focus p{font-size:13px;color:var(--muted)}
+.focus .btn{margin-top:18px}
+.trace{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:14px;font-size:12px;color:var(--muted)}
+.trace a{display:inline-flex;gap:6px;align-items:baseline;padding:2px 0;border-bottom:1px solid transparent}
+.trace a:hover{border-color:currentColor;color:var(--ink)}
+.trace a b{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.trace svg{width:12px;height:12px;opacity:.6}
+
+/* Lists */
+.meterwrap{display:flex;align-items:center;gap:11px;margin:14px 0 6px;font:10px var(--mono);color:var(--muted)}
+.meter{flex:1;height:4px;border-radius:4px;background:var(--soft);overflow:hidden;display:flex}
+.meter i{display:block;height:100%;background:var(--g1)}
+.task{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--hair)}
+.task:last-child,.row:last-child{border-bottom:0}
+.check{flex:none;width:19px;height:19px;border:1.5px solid var(--muted);border-radius:5px;display:grid;place-items:center;opacity:.75}
+.check svg{width:13px;height:13px;display:none}
+.done .check{background:var(--g1);border-color:var(--g1);color:var(--surface);opacity:1}
+.done .check svg{display:block}
+.taskbody{flex:1;min-width:0}
+.title{display:block;font-size:13px;font-weight:600;line-height:1.45;overflow-wrap:anywhere}
+button.taskbody:hover .title,.row:hover .title{text-decoration:underline}
+.done .title{text-decoration:line-through;color:var(--muted);font-weight:500}
+.sub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:11px;color:var(--muted);margin-top:3px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
+.gtag{display:inline-flex;align-items:center;gap:5px}
+.chip{display:inline-flex;align-items:center;gap:5px;font:10px var(--mono);border-radius:4px;background:var(--soft);color:var(--muted);padding:4px 7px;white-space:nowrap}
+.chip svg{width:12px;height:12px}
+.chip.warn{background:var(--rust-soft);color:var(--rust)}
+.chip.good{background:var(--accent-soft);color:var(--accent)}
+.row{width:100%;display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--hair)}
+.row>.ic:last-child{margin-left:auto;width:15px;color:var(--muted)}
+.spine{flex:none;width:30px;height:38px;border-radius:2px 4px 4px 2px;display:grid;place-items:center;color:var(--surface);border-left:4px solid rgba(0,0,0,.14)}
+.spine svg{width:16px;height:16px}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:4px;font-size:11px;color:var(--muted)}
+.empty{font-size:13px;color:var(--muted);padding:16px 0}
+
+/* Agenda */
+.slot{display:grid;grid-template-columns:92px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.slot:last-child{border-bottom:0}
+.slot .t{font:11px var(--mono);color:var(--muted)}
+.slot.now{margin:0 -12px;padding:10px 12px;background:var(--accent-soft);border-radius:8px;border-bottom-color:transparent}
+.slot.now .name{font-weight:650}
+.slot .name{font-weight:500;display:flex;gap:8px;align-items:center;min-width:0}
+.mark{display:flex;align-items:center;gap:10px;padding:7px 0;font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--rust)}
+.mark::after{content:"";flex:1;border-top:1px dashed var(--line)}
+
+/* Figures */
+.figure{font:400 40px/1 var(--serif);letter-spacing:-.04em}
+.figure small{font-size:18px;color:var(--muted);letter-spacing:-.02em}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--muted);margin-top:10px}
+.facts{margin-top:16px;border-top:1px solid var(--hair)}
+.fact{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.fact:last-child{border-bottom:0;padding-bottom:0}
+.ritual label{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--hair);font-size:13px;cursor:pointer}
+.ritual label:last-child{border-bottom:0}
+.ritual input{width:17px;height:17px;accent-color:var(--g1);margin:0;flex:none}
+.hgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.hbox{display:block;border:1px solid var(--line);border-radius:9px;background:var(--surface);padding:15px 16px}
+a.hbox:hover{border-color:var(--muted)}
+.hbox .kicker{display:flex;align-items:center;gap:7px;font-size:9px}
+.hbox .kicker svg{width:14px;height:14px}
+.hbox .kicker svg:last-child{margin-left:auto;width:12px}
+.hbox strong{display:block;margin-top:7px;font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.hbox .figure{margin-top:8px;font-size:32px}
+.hbox .note{font-size:11px;color:var(--muted);margin-top:5px}
+
+/* Board */
+.board{display:grid;grid-template-columns:repeat(4,minmax(215px,1fr));gap:14px;overflow-x:auto;padding-bottom:6px}
+.board.week{grid-template-columns:repeat(7,minmax(150px,1fr));gap:10px}
+.col{background:var(--rail);border:1px solid transparent;border-radius:11px;padding:12px 10px 10px;min-height:150px;display:flex;flex-direction:column;gap:8px}
+.col.over{border-color:var(--g1);background:var(--accent-soft)}
+.colhead{display:flex;justify-content:space-between;align-items:baseline;padding:0 5px;font-size:13px;font-weight:650}
+.colhead span{font:11px var(--mono);color:var(--muted);font-weight:400}
+.colnote{padding:0 5px;font-size:11px;color:var(--muted);margin-top:-6px}
+.kcard{display:block;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 12px;cursor:grab}
+.kcard:hover{border-color:var(--muted)}
+.kcard.drag{opacity:.4}
+.kcard .sub{margin-top:5px}
+.kcard .bar{height:3px;border-radius:3px;background:var(--soft);margin-top:9px;overflow:hidden}
+.kcard .bar i{display:block;height:100%;background:var(--g1)}
+.aging{color:var(--rust);font-weight:600}
+.today-col .colhead{color:var(--accent)}
+.coldrop{font-size:11px;color:var(--muted);text-align:center;padding:12px 4px;border:1px dashed var(--line);border-radius:8px}
+
+/* Goals */
+.goal{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:26px;padding:20px 0;border-bottom:1px solid var(--hair)}
+.goal:first-of-type{padding-top:6px}
+.goal:last-child{border-bottom:0;padding-bottom:0}
+.goal h3{display:flex;align-items:center;gap:10px}
+.kr{display:grid;grid-template-columns:minmax(0,1fr) 120px 38px;gap:14px;align-items:center;padding:8px 0;font-size:13px}
+.kr .num{font-size:11px;color:var(--muted);text-align:right}
+.goal aside{text-align:right}
+.pace{position:relative;height:4px;border-radius:4px;background:var(--soft);margin-top:10px}
+.pace i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.pace em{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.55}
+.theme li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.theme ul{list-style:none;margin:12px 0 0;padding:0}
+.theme li:last-child{border-bottom:0;padding-bottom:0}
+.theme h2{margin-top:8px}
+.banner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:var(--accent-soft)}
+
+/* Calendar */
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-top:14px}
+.cal .dh{font:600 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 6px 8px}
+.cal .d{min-height:72px;border-top:1px solid var(--hair);padding:6px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.cal .d .n{font:11px var(--mono);color:var(--muted)}
+.cal .d.off .n{opacity:.4}
+.cal .d.today .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--btn-ink);margin:-3px 0 0 -3px}
+.cal .ev{display:flex;align-items:center;gap:5px;font-size:11px;line-height:1.3;min-width:0}
+.cal .ev span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Review */
+.hbar{display:grid;grid-template-columns:150px minmax(0,1fr) 62px;gap:12px;align-items:center;padding:9px 0;font-size:13px}
+.hbar .pace{margin:0;height:8px}
+.hbar .num{font-size:11px;color:var(--muted);text-align:right}
+.heat{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:14px;max-width:340px}
+.heat div{display:grid;gap:4px}
+.heat i{aspect-ratio:1;border-radius:3px;background:var(--soft)}
+label.q{display:block;font-size:12px;font-weight:600;margin:16px 0 5px}
+input[type=text],input[type=number],input[type=url],select,textarea{display:block;width:100%;border:1px solid var(--line);padding:10px;border-radius:6px;background:var(--surface)}
+textarea{min-height:62px;resize:vertical}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.rules{display:grid;gap:0}
+.rule{padding:12px 0;border-bottom:1px solid var(--hair)}
+.rule:last-child{border-bottom:0;padding-bottom:0}
+.rule b{font-size:13px;font-weight:600}
+.rule p{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Dialog */
+dialog{width:min(470px,calc(100% - 28px));padding:26px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);box-shadow:0 16px 60px rgba(20,35,25,.2)}
+dialog::backdrop{background:rgba(20,35,25,.4)}
+.dialoghead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.close{padding:5px;border-radius:5px;display:grid}
+.close:hover{background:var(--soft)}
+.note{font-size:14px;color:var(--muted);margin:10px 0 2px}
+.strip{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.soft{border:1px solid var(--line);padding:6px 11px;border-radius:6px;font-size:12px;font-weight:500}
+.soft:hover{background:var(--soft)}
+.soft.selected{background:var(--accent-soft);border-color:transparent;font-weight:650}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.steps{counter-reset:s;margin:6px 0 0;padding:0;list-style:none}
+.steps li{counter-increment:s;display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.steps li:last-child{border-bottom:0}
+.steps li::before{content:counter(s);font:400 20px/1 var(--serif);color:var(--muted);width:16px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--btn-ink);border-radius:8px;padding:10px 18px;font-size:13px;z-index:10;box-shadow:0 6px 28px rgba(0,0,0,.15)}
+.toast:empty{display:none}
+.veil{display:none}
+
+@media (max-width:1080px){
+  .shell{grid-template-columns:190px minmax(0,1fr)}
+  .rail{padding-inline:12px}
+  .trio{grid-template-columns:1fr 1fr}
+  .hgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:fixed;left:0;top:0;bottom:0;width:230px;z-index:6;transform:translateX(-100%);visibility:hidden}
+  .rail.open{transform:none;visibility:visible}
+  .veil.show{display:block;position:fixed;inset:0;background:rgba(20,35,25,.35);z-index:5;width:100%}
+  .menu{display:inline-flex}
+  .bar{height:62px}
+  .cols,.cols.even,.trio{grid-template-columns:1fr}
+  .goal{grid-template-columns:1fr;gap:10px}
+  .goal aside{text-align:left}
+}
+@media (max-width:620px){
+  .card{padding:18px}
+  .focus{padding:22px 20px}
+  .focuscopy{max-width:100%}
+  .focus canvas{opacity:.35;width:100%}
+  .pagehead>span,.crumb>span,.btn kbd,.tools .outline{display:none}
+  .hgrid{grid-template-columns:1fr 1fr}
+  .kr{grid-template-columns:minmax(0,1fr) 60px 34px}
+  .hbar{grid-template-columns:104px minmax(0,1fr) 56px}
+  .slot{grid-template-columns:84px 1fr auto}
+  .cal .ev span{display:none}
+  .cal .d{min-height:52px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="rail" id="rail">
+    <a class="brand" href="#today"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.2"/><path d="M16 4l3.2 12L16 28l-3.2-12z" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="var(--rail)"/></svg>Compass</a>
+    <nav id="nav" aria-label="Workspace navigation"></nav>
+    <div class="profile"><div class="avatar">SB</div><div><b>Shubham Bansal</b><small>Personal workspace</small></div></div>
+  </aside>
+  <button class="veil" id="veil" data-act="menu" aria-label="Close navigation"></button>
+  <main class="main">
+    <header class="bar">
+      <div class="crumb"><button class="menu" data-act="menu" aria-label="Open navigation" id="menubtn"></button><span>Workspace</span><span>/</span><strong id="crumb">Today</strong></div>
+      <div class="tools">
+        <button class="btn outline" data-act="plan" id="planbtn">Plan tomorrow</button>
+        <button class="btn primary" data-act="capture" data-id="learn" id="capbtn"></button>
+      </div>
+    </header>
+    <div id="view"></div>
+  </main>
+</div>
+<dialog id="dialog"><div class="dialoghead"><h2 id="dt"></h2><button class="close" data-act="close" aria-label="Close dialog" id="closebtn"></button></div><div id="dc"></div></dialog>
+<div class="toast" role="status" id="toast"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const IC={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/>',queue:'<path d="M4 5h16M4 12h16M4 19h10"/>',week:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/>',month:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m-13 4h1m4 0h1m4 0h1m-11 3h1m4 0h1"/>',quarter:'<circle cx="12" cy="12" r="9"/><path d="M12 3v9h9"/>',year:'<path d="M5 21V4c6-5 8 5 15 0v10c-6 4-10-5-15 0"/>',review:'<path d="M4 20h16M7 16v-5m5 5V5m5 11v-8"/>',compass:'<circle cx="12" cy="12" r="9"/><path d="m15.9 8.1-2.4 5.4-5.4 2.4 2.4-5.4z"/>',plus:'<path d="M12 5v14M5 12h14"/>',arrow:'<path d="M4 12h15m-5-5 5 5-5 5"/>',right:'<path d="m9 5 7 7-7 7"/>',up:'<path d="M6 17 18 5M7 5h11v11"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',check:'<path d="m4 12 5 5L20 6"/>',menu:'<path d="M3 6h18M3 12h18M3 18h18"/>',close:'<path d="m5 5 14 14M19 5 5 19"/>',play:'<path d="M7 4v16l13-8z"/>',doc:'<path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/>',book:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/>',mark:'<path d="M6 3h12v18l-6-4.5L6 21z"/>'};
+const I=n=>'<svg class="ic" aria-hidden="true" viewBox="0 0 24 24">'+IC[n]+'</svg>';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dur=m=>m>=60?(m%60?Math.floor(m/60)+'h '+m%60+'m':m/60+'h'):m+'m';
+const hrs=h=>(Math.round(h*100)/100)+'h';
+
+/* ---------- sample data (clearly a mockup) ---------- */
+const G={
+  bt:{n:'Equity Backtest v1.0',s:'Backtest',c:'var(--g1)',tr:['Make Tradl the OS for retail traders','Ship Equity Backtest v1.0','Parity tests green by 30 Nov','Corporate actions + fee model']},
+  fr:{n:'Series A prep',s:'Fundraise',c:'var(--g2)',tr:['Make Tradl the OS for retail traders','Be Series A ready','Data room v1 shared','Metrics pack + follow-up deck']},
+  br:{n:'Broking Day 1 scope',s:'Broking',c:'var(--g3)',tr:['Make Tradl the OS for retail traders','Sign off Broking Day 1 scope','Scope review on 25 Nov','License checklist + scope review']},
+  k8:{n:'Kubernetes to production',s:'Kubernetes',c:'var(--g4)',tr:['Become a deeper systems engineer','Kubernetes to production','Course modules 3 to 5','Services, Ingress, ConfigMaps']},
+  lf:{n:'Wedding & health',s:'Life',c:'var(--g5)',tr:['Build the life outside work','Wedding planned, 36 workouts','Vendors shortlisted','3 workouts + vendor calls']}
+};
+const dot=g=>'<i class="dot" style="background:'+(g?G[g].c:'var(--line)')+'"></i>';
+const gtag=g=>g?'<span class="gtag">'+dot(g)+G[g].s+'</span>':'';
+const S={
+  focus:'t1',letgo:3,
+  tasks:[
+    {id:'t1',t:'Split & bonus adjustment parity',g:'bt',min:180,when:'09:00',top:1,desc:'Run the reference engine and ours over the same 500 strategies. Every adjusted price must match to the paisa.'},
+    {id:'t2',t:'Investor call: walk through the backtest demo',g:'fr',min:60,when:'13:00',top:1,desc:'Show a full strategy run end to end. Send the data room link after.'},
+    {id:'t3',t:'Broking license checklist review',g:'br',min:90,when:'14:00',top:1,desc:'Go line by line. Mark what is filed, what is pending and who owns it.'},
+    {id:'t4',t:'Review the screening agent PR',g:'bt',min:15,done:1},
+    {id:'t5',t:'Send venue deposit confirmation',g:'lf',min:10},
+    {id:'t6',t:'Update data room: cap table v3',g:'fr',min:20},
+    {id:'t7',t:'Gym',g:'lf',min:45,when:'18:45'}
+  ],
+  agenda:[
+    ['08:00','08:30','Plan the day'],{m:'09:15 · NSE opens'},
+    ['09:00','12:00','Deep work: split & bonus parity','bt','now'],
+    ['12:00','12:45','Lunch and a market check'],
+    ['13:00','14:00','Investor call','fr'],
+    ['14:00','15:30','Broking license checklist','br'],{m:'15:30 · NSE closes'},
+    ['16:00','16:45','Learning block: K8s Services & Ingress','k8','learn'],
+    ['17:00','18:30','PR reviews','bt'],
+    ['18:45','19:30','Gym','lf'],
+    ['19:30','19:45','Evening shutdown']
+  ],
+  queue:[
+    {id:'q1',t:'Raft consensus, visually explained',src:'YouTube',ic:'play',min:38,age:2,col:'inbox',note:'Want to finally understand leader election properly.'},
+    {id:'q2',t:'ClickHouse materialized views for tick data',src:'Article',ic:'doc',min:15,age:1,col:'inbox',g:'bt',note:'Could speed up candle roll-ups for the backtest.'},
+    {id:'q3',t:'SVI volatility surface fitting',src:'Paper',ic:'doc',min:60,age:5,col:'inbox',note:'For the options side, later.'},
+    {id:'q4',t:'Rust async for low-latency order gateways',src:'Blog',ic:'doc',min:25,age:9,col:'inbox',note:'Compare with what we do today.'},
+    {id:'q5',t:'How a large Indian broker scaled its order API',src:'Blog',ic:'doc',min:20,age:16,col:'inbox',g:'br',note:'Relevant once Day 1 scope is signed off.'},
+    {id:'q6',t:'K8s: Services, Ingress & DNS',src:'Course',ic:'book',min:45,col:'booked',when:'Today 16:00',g:'k8'},
+    {id:'q7',t:'Event sourcing for order management',src:'Talk',ic:'play',min:40,col:'booked',when:'Wed 16:00',g:'br'},
+    {id:'q8',t:'K8s: ConfigMaps & Secrets',src:'Course',ic:'book',min:30,col:'booked',when:'Fri 16:00',g:'k8'},
+    {id:'q9',t:'DDIA chapter 7: Transactions',src:'Book',ic:'book',min:90,col:'learning',pct:40,g:'bt'},
+    {id:'q10',t:'SEBI algo-trading framework for retail',src:'Circular',ic:'doc',min:50,col:'learning',pct:70,g:'br'},
+    {id:'q11',t:'K8s: Pods & Deployments',src:'Course',ic:'book',col:'learned',out:'Notes saved, 2 flashcards',g:'k8'},
+    {id:'q12',t:'Novu digest workflows',src:'Docs',ic:'doc',col:'learned',out:'Applied to the alerts pipeline'},
+    {id:'q13',t:'Walk-forward optimisation pitfalls',src:'Article',ic:'doc',col:'learned',out:'Added to the backtest spec',g:'bt'},
+    {id:'q14',t:'Postgres partitioning for candles',src:'Blog',ic:'doc',col:'learned',out:'Notes saved'}
+  ],
+  week:[
+    ['Mon','23',[['Split & bonus parity','bt',3],['Investor call','fr',1],['License checklist','br',1.5],['K8s Services','k8',.75],['PR reviews','bt',1.5],['Gym','lf',.75]]],
+    ['Tue','24',[['Dividend adjustments','bt',4],['Cap table v3','fr',2],['PR reviews','bt',2]]],
+    ['Wed','25',[['Parity suite run','bt',4],['Scope review','br',2],['Event sourcing talk','br',.75],['Beta invite list','bt',2.25]]],
+    ['Thu','26',[['Metrics pack draft','fr',4],['Rights-issue edge cases','bt',3.5]]],
+    ['Fri','27',[['Follow-up deck','fr',4],['K8s ConfigMaps','k8',.75],['Parity fixes','bt',3.25]]],
+    ['Sat','28',[['Lab: deploy on kind','k8',1],['Vendor calls','lf',1]]],
+    ['Sun','29',[['Weekly review','',.5],['Plan week 49','',.5]]]
+  ].map(([d,n,items],i)=>({d,n,items:items.map(([t,g,h],j)=>({id:'w'+i+'_'+j,t,g,h}))})),
+  lists:{
+    week:[['Corporate actions parity green','bt',0],['Metrics pack and follow-up deck sent','fr',0],['K8s: Services, Ingress, ConfigMaps','k8',0]],
+    month:[['Fee & slippage model merged','bt',1],['Data room v1 shared','fr',1],['K8s modules 3 & 4','k8',1],['Venue visit and vendor shortlist','lf',1],['Corporate actions parity green','bt',0],['Broking Day 1 scope review','br',0],['Follow-up deck sent','fr',0]]
+  }
+};
+const KR={
+  bt:[['Engine parity on 500 strategies',62],['Fee, slippage and corporate actions model',70],['Private beta with 50 traders',20]],
+  fr:[['Data room complete',75],['10 Series A conversations',40],['Board-ready metrics pack',30]],
+  br:[['Day 1 product scope signed off',60],['Hire a broking lead',10],['License documentation filed',35]],
+  k8:[['Finish course modules 1 to 8',50],['Run the paper-trading engine on a cluster',25],['Helm + CI deploy for one service',45]],
+  lf:[['Venue, vendors and guest list locked',70],['36 workouts this quarter',42]]
+};
+const NAMES={today:'Today',learn:'Learning queue',week:'This week',month:'This month',quarter:'This quarter',year:'This year',review:'Weekly review'};
+const ICON={today:'sun',learn:'queue',week:'week',month:'month',quarter:'quarter',year:'year',review:'review'};
+const COLS=[['inbox','Inbox','Decide within 48 hours'],['booked','Booked','Has a slot on the calendar'],['learning','Learning','Picks up where you stopped'],['learned','Learned','Ends with a note or an action']];
+const SLOTS=['Wed 16:00','Fri 16:00','Sat 10:00','Mon 16:00'];let slotI=0;
+let page='today',toastT;
+
+/* ---------- shared pieces ---------- */
+function notify(m){$('#toast').textContent=m;clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').textContent='',2600)}
+function header(title,over,note=''){return '<div class="pagehead"><div><div class="over kicker" style="color:var(--rust)">'+I(ICON[page])+esc(over)+'</div><h1>'+esc(title)+'</h1></div><span>'+esc(note)+'</span></div>'}
+function progress(a,b,unit){return '<div class="meterwrap"><span>'+a+' / '+b+' '+unit+'</span><div class="meter"><i style="width:'+(b?a/b*100:0)+'%"></i></div></div>'}
+function trace(g,upto=4){const L=[['2026','year'],['Q4','quarter'],['November','month'],['Week 48','week']];return '<div class="trace">'+L.slice(0,upto).map(([k,p],i)=>'<a href="#'+p+'"><b>'+k+'</b>'+esc(G[g].tr[i])+'</a>').join(I('right'))+'</div>'}
+function taskRow(t){return '<div class="task '+(t.done?'done':'')+'"><button class="check" data-act="toggle" data-id="'+t.id+'" aria-pressed="'+!!t.done+'" aria-label="'+esc((t.done?'Reopen ':'Complete ')+t.t)+'">'+I('check')+'</button><button class="taskbody" data-act="task" data-id="'+t.id+'"><span class="title">'+esc(t.t)+'</span><span class="sub">'+gtag(t.g)+(t.when?'<span>'+t.when+'</span>':'')+'</span></button><span class="chip">'+I('clock')+dur(t.min)+'</span></div>'}
+function stepRow(key,i,[t,g,done]){return '<div class="task '+(done?'done':'')+'"><button class="check" data-act="step" data-id="'+key+':'+i+'" aria-pressed="'+!!done+'" aria-label="'+esc((done?'Reopen ':'Complete ')+t)+'">'+I('check')+'</button><span class="taskbody"><span class="title">'+esc(t)+'</span><span class="sub">'+gtag(g)+'</span></span></div>'}
+function supports(label,text,to){return '<p class="support">Supports <a class="link" href="#'+to+'">'+esc(label+' · '+text)+' '+I('up')+'</a></p>'}
+const inbox=()=>S.queue.filter(x=>x.col==='inbox').sort((a,b)=>b.age-a.age);
+function status(p){return p>=50?['good','On track']:p>=38?['','At risk']:['warn','Behind']}
+
+/* ---------- Today ---------- */
+function today(){
+  const ts=S.tasks,f=ts.find(x=>x.id===S.focus&&!x.done)||ts.find(x=>x.top&&!x.done)||ts.find(x=>!x.done),due=inbox().slice(0,3);
+  const mix={bt:4.5,fr:1,br:1.5,k8:.75,lf:.75,'':3.5};
+  return header('Good morning, Shubham','Monday 23 November · Week 48','Day 327 of 365')
+  +'<section class="focus"><canvas id="hills" aria-hidden="true"></canvas><div class="focuscopy"><div class="kicker">'+I('compass')+'Daily focus</div>'
+  +(f?'<h2>'+esc(f.t)+'</h2><p>'+dur(f.min)+(f.when?' · starts '+f.when:'')+'</p>'+trace(f.g)+'<button class="btn outline" data-act="task" data-id="'+f.id+'">Open focus task '+I('arrow')+'</button>'
+     :'<h2>Everything is done</h2><p>Close the day with the evening shutdown.</p>')
+  +'</div></section>'
+  +'<div class="cols"><section class="card"><div class="cardhead"><h2>Today’s plan</h2><button class="link" data-act="capture" data-id="task">'+I('plus')+'Add task</button></div>'
+  +progress(ts.filter(x=>x.done).length,ts.length,'complete')
+  +'<p class="kicker sub-k">Top three</p>'+ts.filter(x=>x.top).map(taskRow).join('')
+  +'<p class="kicker sub-k">Smaller things</p>'+ts.filter(x=>!x.top).map(taskRow).join('')+'</section>'
+  +'<section class="card"><div class="cardhead"><h2>Time blocks</h2><span class="chip">6h 30m deep work</span></div><div class="section">'
+  +S.agenda.map(a=>a.m?'<div class="mark">'+a.m+'</div>':'<div class="slot '+(a[4]==='now'?'now':'')+'"><span class="t">'+a[0]+' – '+a[1]+'</span><span class="name">'+dot(a[3])+'<span>'+esc(a[2])+'</span></span>'+(a[4]==='now'?'<span class="chip good">Now</span>':a[4]==='learn'?'<span class="chip">From queue</span>':'<span></span>')+'</div>').join('')
+  +'</div></section></div>'
+  +'<div class="trio"><section class="card"><div class="cardhead"><h2>Time to revisit</h2><span class="chip">'+inbox().length+' waiting</span></div><p class="support">Saved learning that is back on your desk. Book it or let it go.</p>'
+  +(due.map(qRow).join('')||'<p class="empty">Nothing waiting. The queue is clear.</p>')
+  +'<div class="foot"><span>Next learning block: today 16:00</span><a class="link" href="#learn">Open queue '+I('arrow')+'</a></div></section>'
+  +'<section class="card"><div class="cardhead"><h2>Direction check</h2><span class="chip good">On course</span></div><p class="figure section">71%</p><p class="support">of today’s 12 hours move a goal forward</p>'
+  +'<div class="meter" style="height:6px;margin-top:12px">'+Object.entries(mix).map(([g,h])=>'<i style="width:'+h/12*100+'%;background:'+(g?G[g].c:'var(--line)')+'"></i>').join('')+'</div>'
+  +'<div class="legend">'+Object.entries(mix).map(([g,h])=>'<span class="gtag">'+dot(g)+(g?G[g].s:'Untied')+' '+hrs(h)+'</span>').join('')+'</div>'
+  +'<div class="facts"><div class="fact"><span>Learning blocks kept this week</span><b class="num">3 of 4</b></div><div class="fact"><span>Days planned in a row</span><b class="num">12</b></div></div></section>'
+  +'<section class="card ritual"><div class="cardhead"><h2>Evening shutdown</h2><span class="chip">19:30 · 10m</span></div><p class="support">Close today before tomorrow starts.</p>'
+  +['Mark what got done, move what didn’t','Decide on today’s captures','Pick tomorrow’s top three','Write one line: what did I learn?'].map((t,i)=>'<label for="r'+i+'"><input type="checkbox" id="r'+i+'">'+t+'</label>').join('')+'</section></div>';
+}
+function qRow(x){const c=['var(--g1)','var(--g2)','var(--g3)','var(--g4)','var(--g5)'][parseInt(x.id.slice(1))%5];return '<button class="row" data-act="item" data-id="'+x.id+'"><span class="spine" style="background:'+c+'">'+I(x.ic||'mark')+'</span><span style="min-width:0"><span class="title">'+esc(x.t)+'</span><span class="sub"><span>'+x.min+' min</span><span '+(x.age>=14?'class="aging"':'')+'>'+(x.age?'saved '+x.age+'d ago':'saved today')+'</span></span></span>'+I('right')+'</button>'}
+
+/* ---------- Learning queue ---------- */
+function kcard(x){
+  let sub='<span>'+esc(x.src)+(x.min?' · '+x.min+' min':'')+'</span>';
+  if(x.col==='inbox')sub+='<span '+(x.age>=14?'class="aging"':'')+'>'+(x.age>=14?'Day '+x.age+' · still want this?':x.age?'saved '+x.age+'d ago':'saved today')+'</span>';
+  if(x.col==='booked')sub+='<span class="chip good">'+esc(x.when)+'</span>';
+  if(x.col==='learned')sub='<span>'+I('check')+'</span><span>'+esc(x.out||'Notes saved')+'</span>';
+  return '<button class="kcard" draggable="true" data-drag="q:'+x.id+'" data-act="item" data-id="'+x.id+'"><span class="title">'+esc(x.t)+'</span><span class="sub">'+sub+'</span>'+(x.g?'<span class="sub">'+gtag(x.g)+'</span>':'')+(x.col==='learning'?'<span class="bar"><i style="width:'+(x.pct||0)+'%"></i></span>':'')+'</button>';
+}
+function learn(){
+  const n=k=>S.queue.filter(x=>x.col===k);
+  return header('Learning queue','Capture now · learn on schedule · let go on purpose',n('inbox').length+' waiting · '+n('booked').length+' booked')
+  +'<p class="lead">Everything you save lands in the inbox. Drag a card to move it, or open it to book a slot, link a goal or let it go.</p>'
+  +'<div class="board">'+COLS.map(([k,name,note])=>'<section class="col" data-drop="q:'+k+'"><div class="colhead">'+name+'<span>'+n(k).length+'</span></div><p class="colnote">'+note+'</p>'+(n(k).map(kcard).join('')||'<div class="coldrop">Nothing here</div>')+'</section>').join('')+'</div>'
+  +'<div class="cols even"><section class="card"><div class="cardhead"><h2>Queue flow</h2><span class="chip">last 8 weeks</span></div><p class="support">A healthy queue closes about as much as it takes in.</p>'
+  +'<svg viewBox="0 0 320 70" width="100%" height="84" role="img" aria-label="Items added and items closed per week, with the gap narrowing" style="margin-top:8px"><g stroke="var(--hair)"><path d="M0 10h320M0 35h320M0 60h320"/></g><polyline fill="none" stroke="var(--rust)" stroke-width="1.8" points="0,16 45,11 91,21 137,9 182,19 228,14 274,24 316,22"/><polyline fill="none" stroke="var(--g1)" stroke-width="1.8" points="0,54 45,52 91,49 137,44 182,42 228,37 274,34 316,29"/><circle cx="316" cy="22" r="3" fill="var(--rust)"/><circle cx="316" cy="29" r="3" fill="var(--g1)"/></svg>'
+  +'<div class="legend"><span class="gtag"><i class="dot" style="background:var(--rust)"></i>Added</span><span class="gtag"><i class="dot" style="background:var(--g1)"></i>Learned or let go</span></div>'
+  +'<div class="facts"><div class="fact"><span>Added this week</span><b class="num">11</b></div><div class="fact"><span>Learned this week</span><b class="num">4</b></div><div class="fact"><span>Let go on purpose</span><b class="num">'+S.letgo+'</b></div></div></section>'
+  +'<section class="card"><div class="cardhead"><h2>House rules</h2></div><div class="rules section">'
+  +[['Capture from anywhere','Browser extension, phone share sheet, a WhatsApp or Telegram forward, or the C key here.'],['Decide within 48 hours','Every capture gets one of three answers: book a slot, link it to a goal, or let it go.'],['Four protected blocks a week','Compass fills each 30 to 45 minute block with the most valuable item that fits.'],['Resurface, then expire','Untouched items return on days 3, 7 and 14. On day 21 you get one last ask, then they archive.']].map(([b,p])=>'<div class="rule"><b>'+b+'</b><p>'+p+'</p></div>').join('')
+  +'</div></section></div>';
+}
+
+/* ---------- Horizons ---------- */
+function week(){
+  const L=S.lists.week,total=S.week.reduce((a,d)=>a+d.items.reduce((s,x)=>s+x.h,0),0),over=total>40;
+  return header('This week','23 – 29 November','Week 48')
+  +'<section class="card"><div class="cardhead"><span class="kicker">Weekly outcomes</span><span class="chip '+(over?'warn':'good')+'">'+hrs(total)+' planned · 40h capacity</span></div>'
+  +supports('November','Parity tests green by 30 Nov','month')+progress(L.filter(x=>x[2]).length,L.length,'outcomes')+L.map((x,i)=>stepRow('week',i,x)).join('')+'</section>'
+  +'<div class="cardhead section" style="margin-bottom:12px"><h2>Week board</h2><span class="muted" style="font-size:12px">Drag a card to another day</span></div>'
+  +'<div class="board week">'+S.week.map((d,i)=>{const h=d.items.reduce((s,x)=>s+x.h,0),cap=i<5?8:3;return '<section class="col '+(i===0?'today-col':'')+'" data-drop="w:'+i+'"><div class="colhead">'+d.d+' '+d.n+'<span '+(h>cap?'class="aging"':'')+'>'+hrs(h)+'</span></div>'+(d.items.map(x=>'<div class="kcard" draggable="true" data-drag="w:'+x.id+'"><span class="title">'+esc(x.t)+'</span><span class="sub">'+gtag(x.g)+'<span>'+hrs(x.h)+'</span></span></div>').join('')||'<div class="coldrop">Free</div>')+'</section>'}).join('')+'</div>';
+}
+function month(){
+  const L=S.lists.month,ev={3:[['fr','Partner meeting']],7:[['k8','K8s module 3']],11:[['bt','Fee model merged']],14:[['lf','Venue visit']],18:[['fr','Data room v1']],21:[['k8','K8s module 4']],25:[['br','Scope review']],27:[['fr','Follow-up deck']],30:[['bt','Parity green'],['','Monthly review']]};
+  let c=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>'<div class="dh">'+d+'</div>').join('');
+  for(let d=26;d<=31;d++)c+='<div class="d off"><span class="n">'+d+'</span></div>';
+  for(let d=1;d<=30;d++)c+='<div class="d '+(d===23?'today':'')+'"><span class="n">'+d+'</span>'+(ev[d]||[]).map(([g,t])=>'<span class="ev" title="'+t+'">'+dot(g)+'<span>'+t+'</span></span>').join('')+'</div>';
+  for(let d=1;d<=6;d++)c+='<div class="d off"><span class="n">'+d+'</span></div>';
+  return header('This month','November 2026','8 days left')
+  +'<div class="cols"><section class="card"><div class="cardhead"><h2>Calendar</h2><span class="chip">9 dated milestones</span></div><div class="cal">'+c+'</div></section>'
+  +'<section class="card"><div class="cardhead"><span class="kicker">Monthly goal</span></div><h2 style="margin-top:8px">Parity tests green by 30 Nov</h2>'+supports('Q4','Ship Equity Backtest v1.0','quarter')
+  +progress(L.filter(x=>x[2]).length,L.length,'milestones')+L.map((x,i)=>stepRow('month',i,x)).join('')+'</section></div>';
+}
+function quarter(){
+  return header('This quarter','Q4 2026 · October to December','Day 54 of 92')
+  +'<p class="lead">Five goals, each with measurable results. The small tick on every bar marks where you should be today, 59% through the quarter.</p>'
+  +'<section class="card">'+Object.entries(KR).map(([g,list])=>{const avg=Math.round(list.reduce((a,k)=>a+k[1],0)/list.length),st=status(avg);
+    return '<div class="goal"><div><h3>'+dot(g)+esc(G[g].n)+'</h3><p class="support" style="margin-bottom:6px">Supports '+esc(G[g].tr[0])+'</p>'+list.map(k=>'<div class="kr"><span>'+esc(k[0])+'</span><div class="meter"><i style="width:'+k[1]+'%;background:'+G[g].c+'"></i></div><span class="num">'+k[1]+'%</span></div>').join('')+'</div>'
+    +'<aside><span class="chip '+st[0]+'">'+st[1]+'</span><p class="figure" style="margin-top:10px">'+avg+'<small>%</small></p><div class="pace"><i style="width:'+avg+'%;background:'+G[g].c+'"></i><em style="left:59%"></em></div></aside></div>'}).join('')+'</section>';
+}
+function year(){
+  const T=[['Company','Make Tradl the OS for retail traders',[['Equity backtest live for users','','At risk'],['Broking arm Day 1 product','good','On track'],['Close the round','good','On track']]],['Craft','Become a deeper systems engineer',[['Kubernetes, beginner to production','good','On track'],['Read 6 systems books','','2 of 6'],['A real AI coding workflow','good','Done']]],['Life','Build the life outside work',[['Wedding planned without stress','good','On track'],['3 workouts a week','warn','Behind'],['Monthly SIPs and a lump-sum plan','good','Done']]]];
+  return header('This year','2026 · three themes','39 days left')
+  +'<section class="card banner"><div><p class="kicker">Coming up</p><h3 style="margin-top:6px">2027 planning opens on 1 December</h3><p class="support">A guided 90 minute session: review 2026, choose three themes, set Q1 goals.</p></div><button class="btn primary" data-act="say" data-id="Planning session booked for 1 December">Book the session</button></section>'
+  +'<div class="trio">'+T.map(([k,name,items],i)=>'<section class="card theme"><p class="kicker">Theme '+(i+1)+' · '+k+'</p><h2>'+name+'</h2><ul>'+items.map(([t,c,s])=>'<li><span>'+t+'</span><span class="chip '+c+'">'+s+'</span></li>').join('')+'</ul></section>').join('')+'</div>'
+  +'<p class="support section">Each theme breaks down into this quarter’s goals. <a class="link" href="#quarter">Open this quarter '+I('arrow')+'</a></p>';
+}
+
+/* ---------- Review ---------- */
+function review(){
+  const hb=[['bt',14,16],['fr',6.5,7],['br',3,5],['k8',2.5,4],['lf',3,4],['',13,6]];
+  let seed=7,heat='';const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+  for(let w=0;w<12;w++){heat+='<div>';for(let d=0;d<7;d++){const r=rnd()+w*.045,l=r>1.05?1:r>.75?.65:r>.45?.35:0;heat+='<i '+(l?'style="background:color-mix(in srgb,var(--g1) '+l*100+'%,var(--soft))"':'')+'></i>'}heat+='</div>'}
+  return header('Week 47 in review','Sunday review · 20 minutes','16 – 22 November')
+  +'<div class="hgrid">'+[['Top three done','11','/ 15','2 more than last week'],['Hours on goals','29','/ 42h','69% aligned'],['Learning blocks kept','3','/ 4','Thursday went to a call'],['Queue in and out','11','→ 7','4 more in than out']].map(([k,a,b,n])=>'<div class="hbox"><p class="kicker">'+k+'</p><p class="figure">'+a+' <small>'+b+'</small></p><p class="note">'+n+'</p></div>').join('')+'</div>'
+  +'<div class="cols even"><div class="stack"><section class="card"><div class="cardhead"><h2>Where the hours went</h2><span class="chip">tick = planned</span></div><div class="section">'
+  +hb.map(([g,a,p])=>'<div class="hbar"><span class="gtag">'+dot(g)+(g?G[g].s:'Untied')+'</span><div class="pace"><i style="width:'+a/16*100+'%;background:'+(g?G[g].c:'var(--rust)')+'"></i><em style="left:'+p/16*100+'%"></em></div><span class="num">'+a+' / '+p+'h</span></div>').join('')
+  +'</div><p class="support">Untied time ran 7 hours over plan, mostly unplanned calls.</p></section>'
+  +'<section class="card"><div class="cardhead"><h2>Shutdown streak</h2><span class="chip good">12 days</span></div><p class="support">One square per day over 12 weeks. Darker means the plan, do, shutdown loop was closed.</p><div class="heat">'+heat+'</div></section></div>'
+  +'<section class="card"><div class="cardhead"><h2>Reflect</h2><span class="chip">feeds week 48</span></div>'
+  +[['What moved a Q4 goal forward?','Fee model merged. Two parity suites green. The investor call went well.'],['What pulled me off course?','Three unplanned calls on Thursday. Skipped the learning block.'],['Which saved items still matter?',''],['Next week’s top three','1. Corporate actions parity  2. Metrics pack and follow-up deck  3. K8s Services and Ingress lab']].map(([q,a],i)=>'<label class="q" for="q'+i+'">'+q+'</label><textarea id="q'+i+'" '+(a?'':'placeholder="Compass lists your five oldest queue items here"')+'>'+a+'</textarea>').join('')
+  +'<div class="actions"><button class="btn primary" data-act="say" data-id="Week 47 closed. Week 48 is drafted from your top three.">Close week and plan week 48</button><button class="btn outline" data-act="say" data-id="Draft saved">Save draft</button></div></section></div>';
+}
+
+/* ---------- dialogs ---------- */
+function openDialog(title,html){$('#dt').textContent=title;$('#dc').innerHTML=html;const d=$('#dialog');if(!d.open)d.showModal()}
+function closeDialog(){const d=$('#dialog');if(d.open)d.close()}
+function taskDialog(id){const t=S.tasks.find(x=>x.id===id);if(!t)return;
+  openDialog('Task','<p class="kicker">'+G[t.g].s+' · '+dur(t.min)+(t.when?' · '+t.when:'')+'</p><h3 class="section" style="margin-top:8px">'+esc(t.t)+'</h3>'+(t.desc?'<p class="note">'+esc(t.desc)+'</p>':'')+'<p class="kicker" style="margin-top:18px">Why it matters</p>'+trace(t.g)
+  +'<div class="actions"><button class="btn primary" data-act="toggle" data-id="'+id+'">'+I('check')+(t.done?'Reopen task':'Mark complete')+'</button>'+(!t.done&&S.focus!==id?'<button class="btn outline" data-act="focus" data-id="'+id+'">'+I('compass')+'Set as daily focus</button>':'')+'</div>')}
+function itemDialog(id){const x=S.queue.find(q=>q.id===id);if(!x)return;
+  const where={inbox:x.age?'Saved '+x.age+' days ago':'Saved today',booked:'Booked for '+x.when,learning:(x.pct||0)+'% through',learned:x.out||'Notes saved'}[x.col];
+  const acts={inbox:'<button class="btn primary" data-act="book" data-id="'+id+'">'+I('plus')+'Book next learning block</button><button class="btn outline" data-act="letgo" data-id="'+id+'">Let go</button>',
+    booked:'<button class="btn primary" data-act="start" data-id="'+id+'">'+I('play')+'Start now</button><button class="btn outline" data-act="unbook" data-id="'+id+'">Back to inbox</button>',
+    learning:'<button class="btn primary" data-act="learned" data-id="'+id+'">'+I('check')+'Mark learned</button>',learned:''}[x.col];
+  openDialog('Learning item','<p class="kicker">'+esc(x.src)+(x.min?' · '+x.min+' min':'')+'</p><h3 style="margin-top:8px">'+esc(x.t)+'</h3>'+(x.note?'<p class="note">'+esc(x.note)+'</p>':'')+'<p class="support" style="margin-top:12px">'+esc(where)+'</p>'
+  +(x.col!=='learned'?'<label class="q" for="glink">Linked goal</label><select id="glink" data-id="'+id+'"><option value="">No goal yet</option>'+Object.entries(G).map(([k,g])=>'<option value="'+k+'" '+(x.g===k?'selected':'')+'>'+esc(g.n)+'</option>').join('')+'</select>':(x.g?'<p class="support">'+gtag(x.g)+'</p>':''))
+  +(acts?'<div class="actions">'+acts+'</div>':''))}
+function captureDialog(kind){const L=kind==='learn',N=kind==='note';
+  openDialog('Quick capture','<div class="strip">'+[['learn','Learn later'],['task','Task'],['note','Note']].map(([k,n])=>'<button class="soft '+(k===kind?'selected':'')+'" data-act="capture" data-id="'+k+'">'+n+'</button>').join('')+'</div>'
+  +'<form id="entry" data-kind="'+kind+'"><label class="q" for="ctitle">'+(L?'What do you want to learn?':N?'What is on your mind?':'What needs doing?')+'</label><input type="text" id="ctitle" required maxlength="120" placeholder="'+(L?'e.g. How Kubernetes schedules a Pod':N?'e.g. Idea for the stock page':'e.g. Send the metrics pack')+'">'
+  +(L?'<label class="q" for="curl">Link (optional)</label><input type="url" id="curl" placeholder="https://…">':'')
+  +(N?'':'<div class="pair"><div><label class="q" for="cmin">Minutes</label><input type="number" id="cmin" min="1" max="600" value="'+(L?20:25)+'"></div><div><label class="q" for="cgoal">Goal (optional)</label><select id="cgoal"><option value="">None yet</option>'+Object.entries(G).map(([k,g])=>'<option value="'+k+'">'+esc(g.s)+'</option>').join('')+'</select></div></div>')
+  +'<div class="actions"><button class="btn primary">'+(L?'Save to queue':N?'Save note':'Add to today')+'</button></div></form>');$('#ctitle').focus()}
+function planDialog(){const left=S.tasks.filter(t=>!t.done).length;
+  openDialog('Plan tomorrow','<p class="note" style="margin-top:0">Five minutes, three steps. Tomorrow opens with a plan already on the desk.</p><ol class="steps"><li><span><b>Carry over.</b> '+left+' open task'+(left===1?'':'s')+' from today: move, reschedule or drop each one.</span></li><li><span><b>Pick the top three</b> from this week’s outcomes, so every day pulls the week forward.</span></li><li><span><b>Place the blocks.</b> Deep work first, then calls, then one learning block from the queue.</span></li></ol><div class="actions"><button class="btn primary" data-act="say" data-id="Tuesday 24 November is planned">Start planning</button></div>')}
+
+/* ---------- actions ---------- */
+const Q=id=>S.queue.find(x=>x.id===id);
+const A={
+  menu(){const o=!$('#rail').classList.contains('open');$('#rail').classList.toggle('open',o);$('#veil').classList.toggle('show',o)},
+  close:closeDialog,
+  toggle(id){const t=S.tasks.find(x=>x.id===id);t.done=!t.done;closeDialog();render()},
+  task:taskDialog,item:itemDialog,capture:captureDialog,plan:planDialog,
+  focus(id){S.focus=id;closeDialog();render();notify('Daily focus updated')},
+  step(id){const [k,i]=id.split(':');S.lists[k][i][2]=S.lists[k][i][2]?0:1;render()},
+  book(id){move(id,'booked');closeDialog();render()},
+  unbook(id){move(id,'inbox');closeDialog();render()},
+  start(id){move(id,'learning');closeDialog();render()},
+  learned(id){move(id,'learned');closeDialog();render()},
+  letgo(id){S.queue=S.queue.filter(x=>x.id!==id);S.letgo++;closeDialog();render();notify('Let go. It will not come back.')},
+  say(msg){closeDialog();notify(msg)}
+};
+function move(id,col){const x=Q(id);if(!x||x.col===col)return;x.col=col;
+  if(col==='booked'){x.when=SLOTS[slotI++%SLOTS.length];notify('Booked for '+x.when)}
+  if(col==='learning'){x.pct=x.pct||0;notify('Started. Compass will resume it in your next block.')}
+  if(col==='learned'){x.out=x.out||'Notes saved';notify('Marked as learned')}
+  if(col==='inbox'){x.age=x.age||0;notify('Back in the inbox')}}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(el){A[el.dataset.act]?.(el.dataset.id);return}
+  if(e.target===$('#dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeDialog()}});
+document.addEventListener('change',e=>{if(e.target.id==='glink'){const x=Q(e.target.dataset.id);x.g=e.target.value||undefined;render();notify(x.g?'Linked to '+G[x.g].n:'Goal link removed')}});
+document.addEventListener('submit',e=>{if(e.target.id!=='entry')return;e.preventDefault();const k=e.target.dataset.kind,t=$('#ctitle').value.trim();if(!t)return;
+  if(k==='learn'){S.queue.unshift({id:'q'+Date.now(),t,src:'Captured',ic:'mark',min:+$('#cmin').value||20,age:0,col:'inbox',g:$('#cgoal').value||undefined});notify('Saved. It returns in 3 days if untouched.')}
+  else if(k==='task'){S.tasks.push({id:'t'+Date.now(),t,g:$('#cgoal').value||'bt',min:+$('#cmin').value||25});notify('Added to today')}
+  else notify('Note saved to this week');
+  closeDialog();render()});
+document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='c'&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!$('#dialog').open&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){e.preventDefault();captureDialog('learn')}});
+
+/* drag between columns (queue stages, week days) */
+let dragging=null;
+document.addEventListener('dragstart',e=>{const c=e.target.closest?.('[data-drag]');if(!c)return;dragging=c.dataset.drag;c.classList.add('drag');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain',dragging)}catch{}});
+document.addEventListener('dragend',()=>{dragging=null;document.querySelectorAll('.drag,.col.over').forEach(x=>x.classList.remove('drag','over'))});
+document.addEventListener('dragover',e=>{const c=e.target.closest?.('[data-drop]');if(!c||!dragging||c.dataset.drop[0]!==dragging[0])return;e.preventDefault();document.querySelectorAll('.col.over').forEach(x=>x!==c&&x.classList.remove('over'));c.classList.add('over')});
+document.addEventListener('drop',e=>{const c=e.target.closest?.('[data-drop]');if(!c||!dragging)return;e.preventDefault();const [kind,id]=dragging.split(':'),to=c.dataset.drop.split(':')[1];
+  if(kind==='q')move(id,to);
+  else{let item;S.week.forEach(d=>{const i=d.items.findIndex(x=>x.id===id);if(i>-1)item=d.items.splice(i,1)[0]});if(item){S.week[+to].items.push(item);notify('Moved to '+S.week[+to].d+' '+S.week[+to].n)}}
+  dragging=null;render()});
+
+/* ---------- hero art: layered ridgelines ---------- */
+function hills(){const cv=$('#hills');if(!cv)return;const w=cv.clientWidth,h=cv.clientHeight,r=Math.min(devicePixelRatio||1,2);if(!w||!h)return;cv.width=w*r;cv.height=h*r;
+  const x=cv.getContext('2d'),css=getComputedStyle(document.documentElement),col=n=>css.getPropertyValue(n).trim();x.scale(r,r);
+  x.fillStyle=col('--rust');x.globalAlpha=.85;x.beginPath();x.arc(w*.72,h*.3,Math.min(w,h)*.085,0,7);x.fill();
+  [[.5,.16,.022,1.3],[.62,.28,.017,4.1],[.74,.44,.013,2.2],[.87,.62,.01,5.6]].forEach(([base,a,f,ph])=>{x.globalAlpha=a;x.fillStyle=col('--accent');x.beginPath();x.moveTo(0,h);
+    for(let i=0;i<=w;i+=3){const fade=Math.min(1,i/(w*.45));x.lineTo(i,h-(h*(1-base))*fade*(1+.32*Math.sin(i*f+ph)+.16*Math.sin(i*f*2.7+ph*2)+.07*Math.sin(i*f*6.1+ph)))}
+    x.lineTo(w,h);x.closePath();x.fill()});}
+addEventListener('resize',hills);
+matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',hills);
+new MutationObserver(hills).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- render + routing ---------- */
+const PAGES={today,learn,week,month,quarter,year,review};
+function navItem(p){return '<a class="nav '+(p===page?'active':'')+'" href="#'+p+'" '+(p===page?'aria-current="page"':'')+'>'+I(ICON[p])+NAMES[p]+(p==='learn'?'<span class="count">'+inbox().length+'</span>':'')+'</a>'}
+function render(){
+  $('#nav').innerHTML='<div class="navgroup"><p class="kicker">My workspace</p>'+['today','learn'].map(navItem).join('')+'</div><div class="navgroup"><p class="kicker">Planning horizons</p>'+['week','month','quarter','year'].map(navItem).join('')+'</div><div class="navgroup"><p class="kicker">Reflect</p>'+navItem('review')+'</div>';
+  $('#crumb').textContent=NAMES[page];$('#view').innerHTML=PAGES[page]();hills()}
+function route(){const p=location.hash.slice(1);page=PAGES[p]?p:'today';$('#rail').classList.remove('open');$('#veil').classList.remove('show');closeDialog();render();scrollTo(0,0)}
+$('#menubtn').innerHTML=I('menu');$('#closebtn').innerHTML=I('close');$('#capbtn').innerHTML=I('plus')+'Quick capture <kbd>C</kbd>';
+addEventListener('hashchange',route);route();
+</script>
+</body>
+</html>
