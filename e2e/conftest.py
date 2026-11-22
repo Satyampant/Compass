@@ -12,7 +12,10 @@ SHOTS = os.environ.get("COMPASS_SHOTS")
 INFLIGHT = """
 window.__inflight = 0;
 const f = window.fetch;
-window.fetch = (...a) => { window.__inflight++; return f(...a).finally(() => window.__inflight--); };
+window.fetch = (...a) => {
+  window.__inflight++;
+  return f(...a).finally(() => window.__inflight--);
+};
 """
 
 
