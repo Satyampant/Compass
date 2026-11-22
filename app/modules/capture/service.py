@@ -63,7 +63,7 @@ def _from_link(session: Session, cap: Capture, url: str, rest: str, at: datetime
     ).first()
     if open_item:
         if open_item.state == "inbox":
-            lifecycle.pin_to_desk(open_item, clock.now())
+            lifecycle.pin_to_desk(open_item, clock.now(), settings.today(session))
         cap.status, cap.item_id = "duplicate", open_item.id
         events.record(session, "capture.duplicate", "learning_item", open_item.id)
         return CaptureResult(cap, "duplicate", item=open_item)

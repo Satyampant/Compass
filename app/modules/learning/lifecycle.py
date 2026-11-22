@@ -1,6 +1,6 @@
 """The learning item state machine. No other code sets LearningItem.state."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -60,7 +60,8 @@ def transition(
     if action == "book" and booked_for is None:
         raise TransitionError("book needs a time")
     now = clock.now()
-    _APPLY[action](item, now, booked_for=booked_for, note=note)
+    today = settings.today(session)
+    _APPLY[action](item, now, booked_for=booked_for, note=note, today=today)
     previous, item.state = item.state, target
     item.version += 1
     events.record(
@@ -70,13 +71,14 @@ def transition(
 
 
 def leave_desk(item: LearningItem) -> None:
-    """Take the item off today's revisit list."""
-    item.surfaced_at = item.pinned_at = item.last_ask_at = None
+    """Take the item off the revisit list after a decision."""
+    item.surfaced_at = item.pinned_at = item.last_ask_at = item.shown_on = None
 
 
-def pin_to_desk(item: LearningItem, now: datetime) -> None:
+def pin_to_desk(item: LearningItem, now: datetime, today: date) -> None:
     """Put the item at the top of today's revisit list."""
     item.surfaced_at = item.pinned_at = now
+    item.shown_on = today
 
 
 def _book(item, now, *, booked_for, **_):
@@ -92,9 +94,9 @@ def _finish(item, now, *, note, **_):
     item.closed_at, item.note = now, note
 
 
-def _unbook(item, now, **_):
+def _unbook(item, now, *, today, **_):
     item.booked_for = None
-    pin_to_desk(item, now)
+    pin_to_desk(item, now, today)
 
 
 def _close(item, now, **_):

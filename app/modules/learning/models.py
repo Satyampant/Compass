@@ -1,6 +1,6 @@
 """The learning_items table."""
 
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -35,6 +35,7 @@ class LearningItem(Base):
     next_resurface_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     surfaced_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     pinned_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    shown_on: Mapped[date | None]
     last_ask_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     booked_for: Mapped[datetime | None] = mapped_column(UTCDateTime)
     started_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
