@@ -32,3 +32,14 @@ def client(session):
     from app.main import app
 
     return TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def no_network(monkeypatch):
+    """Page fetches answer 404 unless a test installs its own fake web."""
+    import httpx
+
+    from app.modules.capture import enrich
+
+    offline = httpx.MockTransport(lambda request: httpx.Response(404))
+    monkeypatch.setattr(enrich, "make_client", lambda: httpx.Client(transport=offline))
