@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+import app.handlers  # noqa: F401
 from app.kernel import clock, db, migrate
 
 

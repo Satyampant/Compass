@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.kernel import clock, events, settings
+from app.kernel import clock, events, jobs, settings
 from app.modules.capture import links
 from app.modules.capture.models import Capture, Note
 from app.modules.day.models import Task
@@ -76,6 +76,7 @@ def _from_link(session: Session, cap: Capture, url: str, rest: str, at: datetime
         source_type=links.source_type(url),
     )
     cap.status, cap.item_id = "item", item.id
+    jobs.enqueue(session, "enrich_item", clock.now(), item_id=item.id)
     return CaptureResult(cap, "item", item=item)
 
 
