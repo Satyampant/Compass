@@ -3,7 +3,9 @@ name = "compass"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.20.1",
     "fastapi>=0.165.0",
+    "sqlalchemy>=2.1.9",
     "uvicorn>=0.54.0",
 ]
 
@@ -16,6 +18,7 @@ dev = [
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["migrations/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
