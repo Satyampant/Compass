@@ -1,0 +1,12 @@
+/* Additions on top of the mockup styles. */
+.navgroup .nav.soon{opacity:.45;pointer-events:none}
+.strip .soft:focus-visible{outline-offset:1px}
+.board .col{min-width:0}
+.kcard{touch-action:none}
+.kcard.dragging{opacity:.4}
+.dialog-error{color:var(--rust);font-size:12px;margin-top:8px}
+input[type=datetime-local]{display:block;width:100%;border:1px solid var(--line);padding:10px;border-radius:6px;background:var(--surface)}
+.addtask{display:flex;gap:8px;margin-top:12px}
+.addtask input[type=text]{flex:1}
+.addtask input[type=number]{width:84px}
+.welcome{margin-top:20px}
