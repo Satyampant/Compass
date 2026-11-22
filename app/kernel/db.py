@@ -4,7 +4,9 @@ import os
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import DateTime, Engine, create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.types import TypeDecorator
@@ -67,3 +69,6 @@ def get_session() -> Iterator[Session]:
     """FastAPI dependency: one session per request."""
     with SessionLocal() as session:
         yield session
+
+
+SessionDep = Annotated[Session, Depends(get_session)]

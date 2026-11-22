@@ -21,3 +21,13 @@ def fake_clock():
     clock.use(fake)
     yield fake
     clock.use(clock.Clock())
+
+
+@pytest.fixture
+def client(session):
+    """An API client on the test database. Background threads are not started."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    return TestClient(app)

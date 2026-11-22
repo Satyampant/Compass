@@ -1,6 +1,6 @@
 """The learning item state machine. No other code sets LearningItem.state."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -80,7 +80,7 @@ def pin_to_desk(item: LearningItem, now: datetime) -> None:
 
 
 def _book(item, now, *, booked_for, **_):
-    item.booked_for = booked_for
+    item.booked_for = booked_for.astimezone(UTC)
     leave_desk(item)
 
 
