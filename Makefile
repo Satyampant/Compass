@@ -1,4 +1,4 @@
-.PHONY: dev test lint
+.PHONY: dev test lint e2e
 
 dev:
 	uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
@@ -9,3 +9,7 @@ test:
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
+
+e2e:
+	cd web && npm run build
+	uv run pytest -q e2e

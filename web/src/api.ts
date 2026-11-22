@@ -33,6 +33,7 @@ export interface Today {
   tasks: Task[]
   revisit: Item[]
   inbox_count: number
+  has_items: boolean
   next_slot: string
 }
 
