@@ -15,3 +15,10 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
   - Life goals sit beside work goals in the same tree.
 - Secrets live outside the repo in `~/.config/compass/secrets.env`.
 - Mockup reference: `docs/html/Compass Planner.html`.
+
+## 23 November 2026 (phase 0 build)
+
+- Revisit list: a resurfaced item gets one day on the list, then leaves until its next step. At most three a day; items that do not fit wait for the next day.
+- Catch-up: after a sleep the morning run replays each missed day in order, so the list matches an always-on system (AP-4).
+- Booking in phase 0, from a drag or the bot's Book button, takes the next learning slot from settings. The item dialog can also pick a time.
+- Marking learned takes an optional note in phase 0. It becomes required in phase 1 (LQ-6).
