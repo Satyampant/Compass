@@ -6,6 +6,7 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 
 - Notes: plain-text captures typed as "note" go into a small `notes` table (id, body, created_at).
 - Top priorities: no hard limit on ranked tasks in the database. "Top three" remains the default in the UI.
+- Decision window: not a setting. "Decide within 48 hours" appears only as wording in the UI.
 - Let go: allowed from Inbox and Booked only. An item in Learning is finished or returned first.
 - PRD open calls, taken as proposed:
   - Success targets in PRD section 03 stand.
