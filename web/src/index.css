@@ -59,3 +59,9 @@ dialog .slot{grid-template-columns:120px 1fr auto}
 .flowweek span{font:10px var(--mono);color:var(--muted);text-align:center}
 .legend{display:flex;gap:16px;margin-top:12px;font-size:12px}
 .prompt{margin-bottom:20px}
+.setting{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.setting:last-child{border-bottom:0}
+.setting small{display:block;font-size:11px}
+.setting input[type=time]{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--surface)}
+.slotrow{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:8px;align-items:center;padding:6px 0}
+.slotrow input[type=time]{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--surface)}

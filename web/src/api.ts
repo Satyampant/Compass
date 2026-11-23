@@ -283,3 +283,33 @@ export interface StatusData {
 export const systemApi = {
   status: () => call<StatusData>('GET', '/v1/status'),
 }
+
+export type Settings = {
+  resurface_days: number[]
+  last_ask_day: number
+  last_ask_grace_days: number
+  revisit_per_day: number
+  default_estimate_min: number
+  max_in_learning: number
+  learning_slots: { weekday: number; time: string }[]
+  learning_block_min: number
+  day_window: [string, string]
+  capacity_weekday_hours: number
+  capacity_weekend_hours: number
+  capacity_week_hours: number
+  top_priorities: number
+  morning_run_time: string
+  shutdown_nudge_time: string
+  block_reminder_min: number
+  nudges_per_day: number
+  pace_on_track_points: number
+  pace_at_risk_points: number
+  review_time: string
+  timezone: string
+  backup_dir: string | null
+}
+
+export const settingsApi = {
+  get: () => call<Settings>('GET', '/v1/settings'),
+  put: (changes: Partial<Settings>) => call<Settings>('PUT', '/v1/settings', changes),
+}

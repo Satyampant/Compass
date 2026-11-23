@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { TagLabel } from '../components/GoalPicker'
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { api, type Action, type Item, type ItemState } from '../api'
+import { api, settingsApi, type Action, type Item, type ItemState } from '../api'
 import { Icon } from '../icons'
 import { SOURCE_NAMES, ageDays, savedAgo, slotLabel } from '../format'
 import { ItemDialog } from '../components/ItemDialog'
@@ -19,8 +19,6 @@ const COLS: [ItemState, string, string][] = [
 ]
 
 /** The move a drag between two columns makes, the same as the matching button. */
-const MAX_IN_LEARNING = 2
-
 const DRAG_MOVES: Record<string, Action> = {
   'inbox>booked': 'book',
   'booked>learning': 'start',
@@ -88,6 +86,7 @@ function sortFor(state: ItemState, items: Item[]): Item[] {
 /** Learning queue: drag a card to move it, or open it to decide. */
 export function QueuePage() {
   const { data: items = [] } = useQuery({ queryKey: ['items'], queryFn: api.items })
+  const settings = useQuery({ queryKey: ['settings'], queryFn: settingsApi.get })
   const [openId, setOpenId] = useState<number | null>(null)
   const move = useItemTransition()
   const toast = useToast()
@@ -97,7 +96,7 @@ export function QueuePage() {
   const [startingId, setStartingId] = useState<number | null>(null)
   const inLearning = items.filter((i) => i.state === 'learning')
   const starting = items.find((i) => i.id === startingId)
-  const start = (id: number) => (inLearning.length >= MAX_IN_LEARNING ? setStartingId(id) : move.mutate({ id, action: 'start' }))
+  const start = (id: number) => (inLearning.length >= (settings.data?.max_in_learning ?? 2) ? setStartingId(id) : move.mutate({ id, action: 'start' }))
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     const from = active.data.current?.state as ItemState

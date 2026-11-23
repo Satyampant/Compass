@@ -107,7 +107,6 @@ def pull(session: Session) -> None:
         for calendar_id in settings.get(session, "calendar_read_ids"):
             pull_calendar(session, cal, calendar_id)
     except NotConnected as exc:
-        session.rollback()
         set_status(session, False, str(exc))
         return
     set_status(session, True)

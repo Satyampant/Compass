@@ -53,3 +53,9 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - "Where the hours went" counts planned minutes from tasks and learning blocks, and done minutes from done tasks and started blocks.
 - Planning prompts: next quarter's planning opens on the 24th of the quarter's last month (24 December for Q1), next year's on 1 December. A prompt stays until the period starts or has goals.
 - Pace: day N of a period counts today, so day 54 of 92 is a pace of 59%.
+
+## 23 November 2026 (phase 4 build)
+
+- Settings: every rule from PRD section 08 is editable on the Settings screen and checked on the server before any change is stored. Changing learning slots or their length removes upcoming slots that no longer match; their items keep their booking and move to the new slots.
+- Status rows turn to a warning when older than expected: daily jobs after 26 hours, the weekly review after 8 days, calendar sync after 30 minutes, the Telegram check after 5 minutes. The backup is judged by the date in its file name: today's or yesterday's copy is fine.
+- The browser extension sends title and link with channel "extension". The badge shows SAVE, DUP or ERR.

@@ -14,11 +14,12 @@ import { SetupPage } from './pages/Setup'
 import { WeekPage } from './pages/Week'
 import { ReviewPage } from './pages/Review'
 import { StatusPage } from './pages/Status'
+import { SettingsPage } from './pages/Settings'
 
-const PAGES = ['today', 'learn', 'week', 'month', 'quarter', 'year', 'review', 'status', 'setup'] as const
+const PAGES = ['today', 'learn', 'week', 'month', 'quarter', 'year', 'review', 'status', 'settings', 'setup'] as const
 type Page = (typeof PAGES)[number]
-const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year', review: 'Weekly review', status: 'Status', setup: 'Setup' }
-const ICONS: Record<string, IconName> = { today: 'sun', learn: 'queue', week: 'week', month: 'month', quarter: 'quarter', year: 'year', review: 'review', status: 'clock' }
+const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year', review: 'Weekly review', status: 'Status', settings: 'Settings', setup: 'Setup' }
+const ICONS: Record<string, IconName> = { today: 'sun', learn: 'queue', week: 'week', month: 'month', quarter: 'quarter', year: 'year', review: 'review', status: 'clock', settings: 'compass' }
 const READY = new Set<string>(PAGES)
 
 function PageView({ page, today, onCapture, onPlan }: { page: Page; today?: string; onCapture: (k: CaptureKind) => void; onPlan: () => void }) {
@@ -26,6 +27,7 @@ function PageView({ page, today, onCapture, onPlan }: { page: Page; today?: stri
   if (page === 'setup') return <SetupPage />
   if (page === 'review') return <ReviewPage />
   if (page === 'status') return <StatusPage />
+  if (page === 'settings') return <SettingsPage />
   if (page === 'today' || !today) return <TodayPage onCapture={onCapture} onPlan={onPlan} />
   if (page === 'week') return <WeekPage today={today} />
   if (page === 'month') return <MonthPage today={today} />
@@ -113,6 +115,7 @@ export default function App() {
             <p className="kicker">Reflect</p>
             <NavItem p="review" page={page} />
             <NavItem p="status" page={page} count={warnings || undefined} />
+            <NavItem p="settings" page={page} />
           </div>
         </nav>
       </aside>

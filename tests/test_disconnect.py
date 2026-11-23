@@ -45,3 +45,14 @@ def test_resync_rebuilds_meetings_and_rewrites_deleted_blocks(
     assert monday.event_id != old and calendar.store[monday.calendar_id][monday.event_id]["summary"]
     meetings = session.scalars(select(TimeBlock).where(TimeBlock.source == "calendar")).all()
     assert [m.title for m in meetings] == ["Call"]
+
+
+def test_a_failed_pull_does_not_undo_the_callers_changes(session, fake_clock):
+    from app.kernel import settings
+    from app.modules.day import meetings
+
+    settings.put(session, "top_priorities", 4)
+    meetings.pull(session)
+    session.commit()
+    session.expire_all()
+    assert settings.get(session, "top_priorities") == 4
