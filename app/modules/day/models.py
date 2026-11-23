@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import Integer, Text
+from sqlalchemy import ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.kernel.db import Base, UTCDateTime
@@ -17,6 +17,7 @@ class Task(Base):
     title: Mapped[str] = mapped_column(Text)
     estimate_min: Mapped[int] = mapped_column(Integer, default=30)
     planned_date: Mapped[date] = mapped_column(index=True)
+    goal_id: Mapped[int | None] = mapped_column(ForeignKey("goals.id"), index=True)
     done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     version: Mapped[int] = mapped_column(Integer, default=1)
