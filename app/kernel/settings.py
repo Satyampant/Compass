@@ -30,6 +30,8 @@ DEFAULTS: dict[str, object] = {
     "morning_run_time": "06:00",
     "backup_time": "05:30",
     "backup_dir": None,
+    "calendar_read_ids": ["primary"],
+    "calendar_name": "Compass",
     "shutdown_nudge_time": "19:30",
     "nudges_per_day": 3,
     "pace_on_track_points": 10,

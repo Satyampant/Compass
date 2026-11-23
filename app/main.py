@@ -12,6 +12,7 @@ import app.handlers  # noqa: F401
 from app.kernel import config, migrate, scheduler
 from app.kernel.db import ROOT
 from app.modules.capture.router import router as capture_router
+from app.modules.day.calendar_api import router as calendar_router
 from app.modules.day.days import router as days_router
 from app.modules.day.router import router as day_router
 from app.modules.day.today import router as today_router
@@ -54,6 +55,7 @@ app.include_router(day_router)
 app.include_router(today_router)
 app.include_router(days_router)
 app.include_router(week_router)
+app.include_router(calendar_router)
 app.include_router(planning_router)
 
 

@@ -71,3 +71,8 @@ class Calendar:
 
     def delete_event(self, calendar_id: str, event_id: str) -> None:
         self.call("DELETE", f"/calendars/{calendar_id}/events/{event_id}")
+
+
+def connect() -> Calendar:
+    """The live calendar client. Tests replace this with a fake."""
+    return Calendar()

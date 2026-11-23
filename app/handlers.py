@@ -3,5 +3,6 @@
 from app.kernel import backup  # noqa: F401
 from app.modules.autopilot import brief, resurface  # noqa: F401
 from app.modules.capture import enrich, telegram  # noqa: F401
+from app.modules.day import meetings  # noqa: F401
 from app.modules.day import telegram as day_telegram  # noqa: F401
 from app.modules.learning import telegram as learning_telegram  # noqa: F401

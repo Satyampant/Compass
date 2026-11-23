@@ -51,3 +51,26 @@ def backups_in_tmp(monkeypatch, tmp_path):
     from app.kernel import backup
 
     monkeypatch.setattr(backup, "backup_dir", lambda session: tmp_path / "backups")
+
+
+@pytest.fixture(autouse=True)
+def no_calendar(monkeypatch):
+    """No test reaches Google or the Keychain. The calendar reads as not signed in."""
+    from app.modules.integrations import gcal
+    from app.modules.integrations.google import NotConnected
+
+    def refuse():
+        raise NotConnected("not signed in to Google")
+
+    monkeypatch.setattr(gcal, "connect", refuse)
+
+
+@pytest.fixture
+def calendar(monkeypatch):
+    """An in-memory Google Calendar in place of the real one."""
+    from app.modules.integrations import gcal
+    from tests.fakes import FakeCalendar
+
+    fake = FakeCalendar()
+    monkeypatch.setattr(gcal, "connect", lambda: fake)
+    return fake

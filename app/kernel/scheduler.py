@@ -2,7 +2,7 @@
 
 import logging
 import threading
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,11 @@ DAILY: list[tuple[str, str]] = [
 ]
 
 
+EPOCH = datetime(2026, 1, 1, tzinfo=UTC)
+# (job kind, minutes between runs)
+INTERVALS: list[tuple[str, int]] = [("calendar_pull", 10)]
+
+
 def latest_due(now: datetime, at: str, tz) -> datetime:
     """The most recent moment, at or before now, when a daily job at local time `at` was due."""
     local = now.astimezone(tz)
@@ -29,11 +34,15 @@ def latest_due(now: datetime, at: str, tz) -> datetime:
 
 
 def ensure_daily(session: Session, now: datetime) -> None:
-    """Enqueue the latest occurrence of each daily job. A long sleep yields one run, not many."""
+    """Enqueue the latest occurrence of each daily and interval job. A long sleep yields one run."""
     tz = settings.tz(session)
     for kind, time_key in DAILY:
         due = latest_due(now, settings.get(session, time_key), tz)
         jobs.enqueue(session, kind, due, key=f"{kind}:{due.astimezone(tz).date()}")
+    for kind, minutes in INTERVALS:
+        step = timedelta(minutes=minutes)
+        due = EPOCH + (now - EPOCH) // step * step
+        jobs.enqueue(session, kind, due, key=f"{kind}:{due.isoformat()}")
 
 
 def run_one(now: datetime) -> bool:
