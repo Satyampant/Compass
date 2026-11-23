@@ -6,7 +6,7 @@ Changes are saved locally first (sync = push or delete) and pushed when Google a
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -93,18 +93,21 @@ def remove(session: Session, block: TimeBlock) -> None:
 
 
 def schedule_reminder(session: Session, block: TimeBlock) -> None:
-    """One reminder job per learning block and start time, due before it starts."""
-    if block.kind != "learning" or not block.item_id or block.status != "planned":
+    """One reminder job per learning block and start time, due before it starts. Empty
+    protected slots get one too: it suggests the shortest item in the inbox."""
+    wanted = block.item_id or block.protected
+    if block.kind != "learning" or block.status != "planned" or not wanted:
         return
     lead = timedelta(minutes=settings.get(session, "block_reminder_min"))
-    key = f"block_reminder:{block.id}:{block.start.isoformat()}"
+    start = block.start.astimezone(UTC).isoformat()
+    key = f"block_reminder:{block.id}:{start}"
     jobs.enqueue(
         session,
         "block_reminder",
         block.start - lead,
         key=key,
         block_id=block.id,
-        start=block.start.isoformat(),
+        start=start,
     )
 
 

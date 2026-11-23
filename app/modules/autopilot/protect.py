@@ -2,7 +2,7 @@
 
 Each slot remembers its nominal start (slot_at). A meeting on it moves the slot to the next
 free stretch of its length that day, inside the day window. With no room left the slot is
-marked not kept and gives up its item, which the next fill books into another slot.
+marked not kept and its item returns to the top of today's list.
 """
 
 from datetime import date, datetime, time, timedelta
@@ -14,6 +14,7 @@ from app.kernel import clock, settings
 from app.modules.day import blocks
 from app.modules.day.blocks_api import window
 from app.modules.day.models import TimeBlock
+from app.modules.learning import lifecycle
 from app.modules.learning.models import LearningItem
 
 STEP = timedelta(minutes=15)
@@ -79,7 +80,10 @@ def resolve(session: Session, slot: TimeBlock) -> None:
     at = place(session, slot)
     if at is None:
         if slot.status != "not_kept":
+            item = session.get(LearningItem, slot.item_id) if slot.item_id else None
             blocks.change(session, slot, status="not_kept", item_id=None)
+            if item and item.state == "booked":
+                lifecycle.transition(session, item, "unbook")
         return
     if at != slot.start or slot.status == "not_kept":
         length = slot.end - slot.start

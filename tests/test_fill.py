@@ -107,15 +107,15 @@ def test_one_tap_swaps_the_item(client, session, fake_clock, calendar):
     assert r["item_id"] == b.id and session.get(LearningItem, a.id).state == "inbox"
 
 
-def test_slot_lost_to_a_meeting_rebooks_its_item(session, fake_clock, calendar):
+def test_slot_lost_to_a_meeting_returns_its_item_to_the_list(session, fake_clock, calendar):
     item = save(session, "https://a.com")
     cycle.run(session)
     assert slots(session)[0].item_id == item.id
     calendar.put("primary", meeting("Offsite", 23, "15:00", "20:00"))
     cycle.run(session)
     assert slots(session)[0].status == "not_kept" and slots(session)[0].item_id is None
-    assert item.state == "booked" and item.booked_for == slots(session)[1].start
-    assert slots(session)[1].item_id == item.id
+    assert item.state == "inbox" and item.pinned_at is not None
+    assert all(s.item_id != item.id for s in slots(session))
 
 
 def test_moving_a_slot_moves_its_item(session, fake_clock, calendar):

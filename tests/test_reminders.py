@@ -118,3 +118,21 @@ def test_shutdown_counts_open_tasks(client, session, fake_clock, tg):
     client.post("/v1/tasks", json={"title": "b"})
     at(session, fake_clock, ist(23, "19:31"))
     assert tg.sent[-1]["text"] == "Time to close the day. 2 tasks are still open."
+
+
+def test_open_slot_reminder_suggests_the_shortest_inbox_item(session, fake_clock, tg, calendar):
+    cycle.run(session)  # slots exist, nothing to fill them
+    session.commit()
+    for url, minutes in (("https://long.example.com", 40), ("https://short.example.com", 12)):
+        item = capture.capture(session, text=url, channel="web", key=url).item
+        item.estimate_min = minutes
+        item.pinned_at = fake_clock.now()  # waiting for a decision, so not booked for you
+    session.commit()
+    monday = slots(session)[0]
+    assert monday.item_id is None
+    at(session, fake_clock, monday.start - timedelta(minutes=15))
+    sent = [m for m in tg.sent if "learning block is open" in m["text"]]
+    assert sent[0]["text"] == (
+        "16:00 learning block is open. Shortest in the inbox: https://short.example.com · 12 min"
+    )
+    assert sent[0]["buttons"][0][0][0] == "Book it"

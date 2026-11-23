@@ -3,7 +3,7 @@
 Both are dropped when they come too late, so a long sleep ends in one brief, not a backlog.
 """
 
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -29,15 +29,39 @@ def block_nudge(session: Session, block: TimeBlock, item: LearningItem) -> Nudge
     return Nudge("block_reminder", "\n".join(lines), buttons, item_id=item.id)
 
 
+def open_slot_nudge(session: Session, block: TimeBlock) -> Nudge | None:
+    """An empty slot: suggest the shortest item in the inbox, or nothing if it is empty."""
+    shortest = session.scalars(
+        select(LearningItem)
+        .where(LearningItem.state == "inbox")
+        .order_by(LearningItem.estimate_min - LearningItem.progress_min, LearningItem.captured_at)
+        .limit(1)
+    ).first()
+    if shortest is None:
+        return None
+    when = block.start.astimezone(settings.tz(session)).strftime("%H:%M")
+    text = (
+        f"{when} learning block is open. Shortest in the inbox: "
+        f"{shortest.title} · {shortest.estimate_min} min"
+    )
+    buttons = [[("Book it", f"item:book:{shortest.id}"), ("Let go", f"item:let_go:{shortest.id}")]]
+    return Nudge("block_reminder", text, buttons, item_id=shortest.id)
+
+
 @jobs.handler("block_reminder")
 def block_reminder(session: Session, payload: dict) -> None:
-    """Job: remind before a block, unless it moved, lost its item or has already begun."""
+    """Job: remind before a block, unless it moved or has already begun."""
     block = session.get(TimeBlock, payload["block_id"])
-    if block is None or block.start.isoformat() != payload["start"]:
+    if block is None or block.start != datetime.fromisoformat(payload["start"]):
         return
-    if block.status != "planned" or not block.item_id or clock.now() >= block.start:
+    if block.status != "planned" or clock.now() >= block.start:
         return
-    send_nudges(session, [block_nudge(session, block, session.get(LearningItem, block.item_id))])
+    if block.item_id:
+        nudge = block_nudge(session, block, session.get(LearningItem, block.item_id))
+    else:
+        nudge = open_slot_nudge(session, block)
+    if nudge:
+        send_nudges(session, [nudge])
 
 
 def shutdown_text(session: Session, day: date) -> str:
