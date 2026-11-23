@@ -18,8 +18,32 @@ from app.modules.learning.models import LearningItem
 from app.modules.learning.router import ItemOut, item_out
 from app.modules.planning import trace
 from app.modules.planning.router import TraceStep, trace_out
+from app.modules.review import metrics
 
 router = APIRouter(prefix="/v1", tags=["day"])
+
+
+class Direction(BaseModel):
+    aligned_min: int
+    planned_min: int
+    alignment: float | None
+    blocks_kept: int
+    blocks_total: int
+    planning_streak: int
+
+
+def direction(session, day: date) -> Direction:
+    """Today's aligned share, learning blocks kept this week and the planning streak."""
+    numbers = metrics.day_numbers(session, day)
+    kept, total = metrics.blocks_kept(metrics.week_slots(session, clock.week_start(day)))
+    return Direction(
+        aligned_min=numbers.aligned_min,
+        planned_min=numbers.planned_min,
+        alignment=numbers.alignment,
+        blocks_kept=kept,
+        blocks_total=total,
+        planning_streak=metrics.streak(metrics.planned_days(session), day),
+    )
 
 
 class Focus(BaseModel):
@@ -31,6 +55,7 @@ class TodayOut(BaseModel):
     date: date
     focus: Focus | None
     top_limit: int
+    direction: Direction
     closed_at: datetime | None
     learned_line: str | None
     tomorrow_planned: bool
@@ -67,6 +92,7 @@ def today(session: SessionDep) -> TodayOut:
         focus=top
         and Focus(task=task_out(session, top), trace=trace_out(trace.chain(session, top.goal_id))),
         top_limit=settings.get(session, "top_priorities"),
+        direction=direction(session, day),
         closed_at=log.closed_at if log else None,
         learned_line=log.learned_line if log else None,
         tomorrow_planned=bool(nxt and nxt.planned_at),

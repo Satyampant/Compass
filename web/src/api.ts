@@ -46,6 +46,7 @@ export interface Task {
 export interface Today {
   date: string
   focus: { task: Task; trace: TraceStep[] } | null
+  direction: { aligned_min: number; planned_min: number; alignment: number | null; blocks_kept: number; blocks_total: number; planning_streak: number }
   top_limit: number
   closed_at: string | null
   learned_line: string | null

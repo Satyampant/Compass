@@ -36,3 +36,11 @@ def test_banner_and_highlight_that_moves(browser, server):
         page.locator(".mark", has_text="NSE opens").or_(page.locator(".slot"))
     ).not_to_have_count(0)
     context.close()
+
+
+def test_direction_check_card(page, server):
+    page.get_by_label("New task").fill("Split parity")
+    page.get_by_role("button", name="Add", exact=True).click()
+    expect(page.get_by_test_id("alignment")).to_have_text("0%")
+    expect(page.locator(".fact", has_text="Days planned in a row")).to_contain_text("0")
+    shot(page, "today-direction")

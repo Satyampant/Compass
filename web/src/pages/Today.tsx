@@ -10,6 +10,7 @@ import { FocusCard } from '../components/Focus'
 import { TodayPlan } from '../components/TodayPlan'
 import { Shutdown } from '../components/Shutdown'
 import { TimeBlocks } from '../components/TimeBlocks'
+import { Direction } from '../components/Direction'
 import { TaskDialog } from '../components/TaskDialog'
 
 const SPINES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)']
@@ -85,7 +86,7 @@ export function TodayPage({ onCapture, onPlan }: { onCapture: (k: CaptureKind) =
         <TodayPlan data={data} onCapture={onCapture} onOpen={setTaskId} />
         <TimeBlocks data={data} />
       </div>
-      <div className="cols even today-lower">
+      <div className="trio today-lower">
         <section className="card">
           <div className="cardhead">
             <h2>Time to revisit</h2>
@@ -103,6 +104,7 @@ export function TodayPage({ onCapture, onPlan }: { onCapture: (k: CaptureKind) =
             </a>
           </div>
         </section>
+        <Direction data={data} />
         <Shutdown data={data} onPlan={onPlan} />
       </div>
       {open && <ItemDialog item={open} onClose={() => setOpenId(null)} />}
