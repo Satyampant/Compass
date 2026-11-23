@@ -22,3 +22,25 @@ export function slotLabel(iso: string): string {
 export const SOURCE_NAMES: Record<string, string> = {
   video: 'Video', podcast: 'Podcast', repo: 'Repo', paper: 'Paper', thread: 'Thread', article: 'Article', note: 'Note',
 }
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+/** A local date from a YYYY-MM-DD string, at noon so no time zone moves it. */
+export const day = (iso: string) => new Date(`${iso}T12:00:00`)
+export const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+export const monthName = (iso: string) => MONTHS[day(iso).getMonth()]
+
+/** Day number within a period and its length, both counted inclusively. */
+export function periodDay(start: string, end: string, today: string): [number, number] {
+  const span = (a: string, b: string) => Math.round((day(b).getTime() - day(a).getTime()) / 86_400_000) + 1
+  return [span(start, today), span(start, end)]
+}
+
+/** The quarter containing a date: label, first and last month names, first and last dates. */
+export function quarterSpan(iso: string) {
+  const d = day(iso)
+  const q = Math.floor(d.getMonth() / 3)
+  const start = new Date(d.getFullYear(), q * 3, 1)
+  const end = new Date(d.getFullYear(), q * 3 + 3, 0)
+  return { label: `Q${q + 1} ${d.getFullYear()}`, from: MONTHS[q * 3], to: MONTHS[q * 3 + 2], start: isoDay(start), end: isoDay(end) }
+}

@@ -12,3 +12,15 @@ input[type=datetime-local]{display:block;width:100%;border:1px solid var(--line)
 .welcome{margin-top:20px}
 /* The mockup's page-heading .over rule also matches a drop-target column. Keep the column's layout still while dragging. */
 .col.over{display:flex;align-items:stretch;margin-bottom:0;color:inherit}
+.goalform label{display:block;margin-top:14px}
+.goalform label .kicker{display:block;margin-bottom:5px}
+.goalform>.kicker{display:block;margin-top:16px}
+.krrow{display:grid;grid-template-columns:minmax(0,1fr) 84px 84px;gap:6px;margin-top:6px}
+.swatches{display:flex;gap:8px;margin-top:14px}
+.swatches button{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.swatches button[aria-checked=true]{border-color:var(--ink)}
+input[type=date]{display:block;width:100%;border:1px solid var(--line);padding:10px;border-radius:6px;background:var(--surface)}
+.kr .num{background:none;border:0;padding:0;cursor:pointer;font:inherit;font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
+.kr input.num{width:100%;border:1px solid var(--line);border-radius:4px;padding:2px 4px;cursor:text}
+.kr{grid-template-columns:minmax(0,1fr) 120px 74px}
+.empty-cta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}

@@ -5,11 +5,23 @@ import { Icon, type IconName } from './icons'
 import { QuickCapture, type CaptureKind } from './components/QuickCapture'
 import { TodayPage } from './pages/Today'
 import { QueuePage } from './pages/Queue'
+import { MonthPage } from './pages/Month'
+import { QuarterPage } from './pages/Quarter'
+import { YearPage } from './pages/Year'
 
-type Page = 'today' | 'learn'
+const PAGES = ['today', 'learn', 'month', 'quarter', 'year'] as const
+type Page = (typeof PAGES)[number]
 const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year', review: 'Weekly review' }
 const ICONS: Record<string, IconName> = { today: 'sun', learn: 'queue', week: 'week', month: 'month', quarter: 'quarter', year: 'year', review: 'review' }
-const READY = new Set(['today', 'learn'])
+const READY = new Set<string>(PAGES)
+
+function PageView({ page, today, onCapture }: { page: Page; today?: string; onCapture: (k: CaptureKind) => void }) {
+  if (page === 'learn') return <QueuePage />
+  if (page === 'today' || !today) return <TodayPage onCapture={onCapture} />
+  if (page === 'month') return <MonthPage today={today} />
+  if (page === 'quarter') return <QuarterPage today={today} />
+  return <YearPage today={today} />
+}
 
 function useHash(): Page {
   const hash = useSyncExternalStore(
@@ -19,7 +31,7 @@ function useHash(): Page {
     },
     () => window.location.hash.slice(1),
   )
-  return hash === 'learn' ? 'learn' : 'today'
+  return (PAGES as readonly string[]).includes(hash) ? (hash as Page) : 'today'
 }
 
 function NavItem({ p, page, count }: { p: string; page: Page; count?: number }) {
@@ -108,7 +120,7 @@ export default function App() {
             </button>
           </div>
         </header>
-        {page === 'today' ? <TodayPage onCapture={setCapture} /> : <QueuePage />}
+        <PageView page={page} today={today.data?.date} onCapture={setCapture} />
       </main>
       {capture && <QuickCapture initial={capture} onClose={() => setCapture(null)} />}
     </div>

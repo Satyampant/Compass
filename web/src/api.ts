@@ -67,3 +67,59 @@ export const api = {
   editTask: (id: number, patch: Partial<{ title: string; estimate_min: number; done: boolean; planned_date: string }>) =>
     call<Task>('PATCH', `/v1/tasks/${id}`, patch),
 }
+
+export type Horizon = 'year' | 'quarter' | 'month' | 'week'
+
+export interface KeyResult {
+  id: number
+  title: string
+  target: number
+  current: number
+  unit: string
+  version: number
+}
+
+export interface Goal {
+  id: number
+  horizon: Horizon
+  title: string
+  parent_id: number | null
+  period_start: string
+  period_end: string
+  due_date: string | null
+  short: string | null
+  color: number | null
+  done: boolean
+  progress: number
+  key_results: KeyResult[]
+  version: number
+}
+
+export interface TraceStep {
+  id: number
+  horizon: Horizon
+  title: string
+  short: string | null
+  color: number | null
+}
+
+export interface GoalIn {
+  horizon: Horizon
+  title: string
+  parent_id?: number | null
+  due_date?: string | null
+  short?: string | null
+  color?: number | null
+  key_results?: { title: string; target: number; current?: number; unit?: string }[]
+}
+
+export const goalsApi = {
+  list: (horizon: Horizon) => call<Goal[]>('GET', `/v1/goals?horizon=${horizon}`),
+  create: (goal: GoalIn) => call<Goal>('POST', '/v1/goals', goal),
+  edit: (id: number, patch: Partial<{ title: string; due_date: string | null; done: boolean; short: string; color: number }>) =>
+    call<Goal>('PATCH', `/v1/goals/${id}`, patch),
+  remove: (id: number) => fetch(`/v1/goals/${id}`, { method: 'DELETE' }),
+  trace: (id: number) => call<TraceStep[]>('GET', `/v1/goals/${id}/trace`),
+  editKeyResult: (id: number, patch: Partial<{ current: number; target: number; title: string }>) =>
+    call<KeyResult>('PATCH', `/v1/key-results/${id}`, patch),
+}
