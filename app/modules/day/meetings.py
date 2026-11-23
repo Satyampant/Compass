@@ -23,10 +23,17 @@ def cursor_key(calendar_id: str) -> str:
 
 
 def set_status(session: Session, connected: bool, error: str | None = None) -> None:
+    """Record the last cycle's result, and whether the calendar has ever been connected."""
+    ever = connected or (settings.get(session, STATUS_KEY) or {}).get("ever_connected", False)
     settings.put(
         session,
         STATUS_KEY,
-        {"connected": connected, "error": error, "at": clock.now().isoformat()},
+        {
+            "connected": connected,
+            "ever_connected": ever,
+            "error": error,
+            "at": clock.now().isoformat(),
+        },
     )
 
 

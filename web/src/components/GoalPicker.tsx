@@ -1,5 +1,5 @@
 import type { Tag } from '../api'
-import { useGoals } from '../goals'
+import { useGoals, useHasGoals } from '../goals'
 import { Dot } from './goals'
 
 /** Choose the goal a task or item serves, lowest horizon first. Empty means untied. */
@@ -33,7 +33,8 @@ export function GoalPicker({ value, onChange, id }: { value: number | null; onCh
 
 /** The goal label on a task or item, or "Untied" when it serves no goal. */
 export function TagLabel({ tag }: { tag: Tag | null }) {
-  if (!tag) return <span className="untied">Untied</span>
+  const hasGoals = useHasGoals()
+  if (!tag) return hasGoals ? <span className="untied">Untied</span> : null
   return (
     <span className="gtag">
       <Dot color={tag.color} />

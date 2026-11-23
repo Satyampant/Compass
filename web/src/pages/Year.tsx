@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Icon } from '../icons'
 import { PlanningPrompt } from '../components/PlanningPrompt'
 import { day, periodDay } from '../format'
-import { AddGoalDialog, Dot } from '../components/goals'
+import { AddGoalDialog, DeleteGoal, Dot } from '../components/goals'
 import { pct, useGoals } from '../goals'
 
 /** This year: up to three themes, each with this quarter's goals under it. */
@@ -37,6 +37,7 @@ export function YearPage({ today }: { today: string }) {
                 {t.short ? ` · ${t.short}` : ''}
               </p>
               <h2>{t.title}</h2>
+              <DeleteGoal goal={t} />
               <ul>
                 {goals.map((g) => (
                   <li key={g.id}>

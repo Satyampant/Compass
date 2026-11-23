@@ -5,6 +5,7 @@ PROMPTS = '[{"horizon": "year", "starts": "2027-01-01", "label": "2027"}]'
 
 
 def test_planning_prompt_banner_creates_next_years_theme(page, server):
+    httpx.post(f"{server}/v1/tasks", json={"title": "past day one"})
     page.route(
         "**/v1/planning/prompts",
         lambda route: route.fulfill(status=200, content_type="application/json", body=PROMPTS),

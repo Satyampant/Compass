@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Goal, GoalIn, Horizon } from '../api'
-import { COLORS, colorVar, HORIZON_NAMES, PARENT, useCreateGoal } from '../goals'
+import { COLORS, colorVar, HORIZON_NAMES, PARENT, useConfirmDraft, useCreateGoal, useDeleteGoal } from '../goals'
 import { Dialog } from './Dialog'
 
 export function Dot({ color }: { color: number | null | undefined }) {
@@ -124,5 +124,38 @@ export function AddGoalDialog({ horizon, parents, onClose, on, title }: { horizo
     <Dialog title={title ?? `Add a ${HORIZON_NAMES[horizon].toLowerCase()}`} onClose={onClose}>
       <GoalFields horizon={horizon} parents={parents} onSave={(g) => create.mutate({ ...g, on })} saving={create.isPending} error={create.error?.message} />
     </Dialog>
+  )
+}
+
+/** A goal waiting for its parent: drafted by the review, or left behind by a deleted goal. */
+export function DraftRow({ goal, parents, why }: { goal: Goal; parents: Goal[]; why: string }) {
+  const confirm = useConfirmDraft()
+  const parentName = HORIZON_NAMES[PARENT[goal.horizon]!].toLowerCase()
+  return (
+    <div className="decide">
+      <span className="taskbody">
+        <span className="title">{goal.title}</span>
+        <span className="sub">
+          <span className="chip">{why}</span>
+        </span>
+      </span>
+      <select aria-label={`Parent for ${goal.title}`} value="" onChange={(e) => e.target.value && confirm.mutate({ goal, parent_id: Number(e.target.value) })}>
+        <option value="">Choose the {parentName} it serves</option>
+        {parents.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.title}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+export function DeleteGoal({ goal }: { goal: Goal }) {
+  const remove = useDeleteGoal()
+  return (
+    <button type="button" className="link quiet" aria-label={`Delete ${goal.title}`} onClick={() => remove.mutate(goal)}>
+      Delete
+    </button>
   )
 }

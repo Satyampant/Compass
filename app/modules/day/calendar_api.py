@@ -16,6 +16,7 @@ router = APIRouter(prefix="/v1/calendar", tags=["calendar"])
 
 class CalendarStatus(BaseModel):
     connected: bool
+    ever_connected: bool = False
     error: str | None
     at: str | None
 

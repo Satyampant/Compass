@@ -5,12 +5,13 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
 from app.kernel import clock, events, settings
 from app.kernel.db import SessionDep
 from app.modules.day.models import Task
+from app.modules.learning.models import LearningItem
 from app.modules.planning import prompts, service, trace
 from app.modules.planning.models import Goal, KeyResult
 from app.modules.planning.periods import period
@@ -202,12 +203,17 @@ def edit_goal(goal_id: int, body: GoalPatch, session: SessionDep) -> GoalOut:
 
 @router.delete("/goals/{goal_id}", status_code=204)
 def delete_goal(goal_id: int, session: SessionDep) -> None:
+    """Delete a goal. Its tasks and items become untied, and the goals under it become drafts
+    that ask for a new parent."""
     goal = get_goal(session, goal_id)
-    if session.scalar(select(Goal.id).where(Goal.parent_id == goal.id).limit(1)):
-        raise HTTPException(409, "remove the goals under it first")
+    session.execute(
+        update(Goal).where(Goal.parent_id == goal.id).values(parent_id=None, draft=True)
+    )
     session.execute(update(Task).where(Task.goal_id == goal.id).values(goal_id=None))
-    for kr in session.scalars(select(KeyResult).where(KeyResult.goal_id == goal.id)):
-        session.delete(kr)
+    session.execute(
+        update(LearningItem).where(LearningItem.goal_id == goal.id).values(goal_id=None)
+    )
+    session.execute(delete(KeyResult).where(KeyResult.goal_id == goal.id))
     session.delete(goal)
     events.record(session, "goal.deleted", "goal", goal_id)
     session.commit()

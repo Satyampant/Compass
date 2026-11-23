@@ -46,6 +46,8 @@ export function TodayPage({ onCapture, onPlan }: { onCapture: (k: CaptureKind) =
   const [openId, setOpenId] = useState<number | null>(null)
   const [taskId, setTaskId] = useState<number | null>(null)
   if (!data) return null
+  // First day, nothing saved: one prompt, no empty charts (PRD section 09).
+  const fresh = !data.has_items && data.tasks.length === 0 && themes.data?.length === 0
   const open = data.revisit.find((i) => i.id === openId)
   const openTask = data.tasks.find((t) => t.id === taskId)
   const dateLine = new Date(`${data.date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -61,9 +63,9 @@ export function TodayPage({ onCapture, onPlan }: { onCapture: (k: CaptureKind) =
           <h1>{greeting()}</h1>
         </div>
       </div>
-      <PlanningPrompt />
-      <FocusCard focus={data.focus} hasTop={data.tasks.some((t) => t.top_rank && t.planned_date === data.date)} onOpen={setTaskId} />
-      {themes.isSuccess && themes.data.length === 0 && (
+      {!fresh && <PlanningPrompt />}
+      {!fresh && <FocusCard focus={data.focus} hasTop={data.tasks.some((t) => t.top_rank && t.planned_date === data.date)} onOpen={setTaskId} />}
+      {!fresh && themes.isSuccess && themes.data.length === 0 && (
         <section className="card banner welcome">
           <div>
             <p className="kicker">Set your direction</p>
@@ -106,7 +108,7 @@ export function TodayPage({ onCapture, onPlan }: { onCapture: (k: CaptureKind) =
             </a>
           </div>
         </section>
-        <Direction data={data} />
+        {!fresh && <Direction data={data} />}
         <Shutdown data={data} onPlan={onPlan} />
       </div>
       {open && <ItemDialog item={open} onClose={() => setOpenId(null)} />}

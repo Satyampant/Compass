@@ -1,3 +1,4 @@
+import httpx
 from playwright.sync_api import expect
 
 from e2e.conftest import shot
@@ -15,7 +16,9 @@ def add(page, label, title, **fields):
     expect(page.locator(".setup-list li", has_text=title)).to_be_visible()
 
 
-def test_guided_setup_from_nothing(page):
+def test_guided_setup_from_nothing(page, server):
+    httpx.post(f"{server}/v1/captures", json={"text": "https://raft.github.io"})  # past day one
+    page.reload()
     page.get_by_role("link", name="Start setup").click()
     expect(page.get_by_role("button", name="Next")).to_be_disabled()
     add(page, "Year theme", "Make Tradl the OS for retail traders")

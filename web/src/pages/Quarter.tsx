@@ -5,7 +5,7 @@ import { goalsApi, type Goal, type KeyResult } from '../api'
 import { Icon } from '../icons'
 import { periodDay, quarterSpan } from '../format'
 import { useToast } from '../components/Toast'
-import { AddGoalDialog, Dot } from '../components/goals'
+import { AddGoalDialog, DeleteGoal, Dot, DraftRow } from '../components/goals'
 import { colorVar, PACE_LABEL, paceStatus, pct, useGoals } from '../goals'
 
 const krShare = (k: KeyResult) => (k.target ? Math.min(k.current / k.target, 1) : 0)
@@ -118,6 +118,7 @@ function GoalCard({ goal, theme, onSave }: { goal: Goal; theme?: Goal; onSave: (
           <i style={{ width: `${pct(goal.progress)}%`, background: colorVar(goal.color) }} />
           {goal.pace !== null && <em style={{ left: `${pct(goal.pace)}%` }} />}
         </div>
+        <DeleteGoal goal={goal} />
       </aside>
     </div>
   )
@@ -153,9 +154,13 @@ export function QuarterPage({ today }: { today: string }) {
         Up to five goals, each with one to three measurable results. Click a number to update it. The small tick on each bar marks where you should be today, {Math.round((n / of) * 100)}% through the quarter.
       </p>
       <section className="card">
-        {list.map((g) => (
-          <GoalCard key={g.id} goal={g} theme={themeById.get(g.parent_id ?? -1)} onSave={(kr, current) => edit.mutate({ kr, current })} />
-        ))}
+        {list.map((g) =>
+          g.draft ? (
+            <DraftRow key={g.id} goal={g} parents={themes.data ?? []} why="Needs a theme" />
+          ) : (
+            <GoalCard key={g.id} goal={g} theme={themeById.get(g.parent_id ?? -1)} onSave={(kr, current) => edit.mutate({ kr, current })} />
+          ),
+        )}
         {goals.isSuccess && list.length === 0 && <p className="empty">No goals for this quarter yet.</p>}
         {list.length < 5 && (
           <div className="foot">

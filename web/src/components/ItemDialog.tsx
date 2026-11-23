@@ -7,6 +7,7 @@ import { useItemTransition } from '../useTransition'
 import { Dialog } from './Dialog'
 import { GoalPicker } from './GoalPicker'
 import { useToast } from './Toast'
+import { useHasGoals } from '../goals'
 
 /** Link an item to a goal, or untie it. Linked items never expire. */
 /** Add minutes to an item in Learning, so the next block picks up where you stopped. */
@@ -50,10 +51,48 @@ function where(item: Item): string {
   }
 }
 
+/** The title, with a way to rename it, for example when the page title could not be fetched. */
+function RenameTitle({ item }: { item: Item }) {
+  const [editing, setEditing] = useState(false)
+  const [title, setTitle] = useState(item.title)
+  const qc = useQueryClient()
+  const toast = useToast()
+  const save = useMutation({
+    mutationFn: () => api.editItem(item.id, { title: title.trim() }),
+    onSuccess: () => {
+      setEditing(false)
+      qc.invalidateQueries()
+    },
+    onError: (err) => toast(err.message),
+  })
+  if (!editing)
+    return (
+      <div className="titlerow">
+        <h3 style={{ marginTop: 8 }}>{item.title}</h3>
+        <button className="link quiet" onClick={() => setEditing(true)}>
+          Rename
+        </button>
+      </div>
+    )
+  return (
+    <form
+      className="addtask"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (title.trim()) save.mutate()
+      }}
+    >
+      <input type="text" aria-label="Item title" autoFocus value={title} onChange={(e) => setTitle(e.target.value)} />
+      <button className="btn outline">Save</button>
+    </form>
+  )
+}
+
 /** A learning item with only the moves that are valid for its state. */
 export function ItemDialog({ item, onClose, onStart }: { item: Item; onClose: () => void; onStart?: () => void }) {
   const move = useItemTransition()
   const link = useLinkGoal(item)
+  const hasGoals = useHasGoals()
   const progress = useSaveProgress(item)
   const [spent, setSpent] = useState(25)
   const [goalId, setGoalId] = useState(item.goal_id)
@@ -69,7 +108,7 @@ export function ItemDialog({ item, onClose, onStart }: { item: Item; onClose: ()
       <p className="kicker">
         {SOURCE_NAMES[item.source_type] ?? item.source_type} · {item.estimate_min} min
       </p>
-      <h3 style={{ marginTop: 8 }}>{item.title}</h3>
+      <RenameTitle item={item} />
       {item.url && (
         <p className="support">
           <a className="link" href={item.url} target="_blank" rel="noreferrer">
@@ -81,7 +120,7 @@ export function ItemDialog({ item, onClose, onStart }: { item: Item; onClose: ()
       <p className="support" style={{ marginTop: 12 }}>
         {where(item)}
       </p>
-      {item.state !== 'learned' && (
+      {item.state !== 'learned' && hasGoals && (
         <>
           <label className="q" htmlFor="igoal">
             Goal

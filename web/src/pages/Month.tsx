@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Goal } from '../api'
 import { Icon } from '../icons'
 import { day, isoDay, monthName, periodDay } from '../format'
-import { AddGoalDialog, Dot, GoalTag } from '../components/goals'
+import { AddGoalDialog, DeleteGoal, Dot, DraftRow, GoalTag } from '../components/goals'
 import { useGoals, useToggleGoal } from '../goals'
 
 export function GoalCheck({ goal, tag, onToggle }: { goal: Goal; tag?: Goal; onToggle: () => void }) {
@@ -18,6 +18,7 @@ export function GoalCheck({ goal, tag, onToggle }: { goal: Goal; tag?: Goal; onT
           {goal.due_date && <span>{day(goal.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
         </span>
       </span>
+      <DeleteGoal goal={goal} />
     </div>
   )
 }
@@ -109,9 +110,13 @@ export function MonthPage({ today }: { today: string }) {
               </div>
             </div>
           )}
-          {list.map((m) => (
-            <GoalCheck key={m.id} goal={m} tag={quarterById.get(m.parent_id ?? -1)} onToggle={() => toggle.mutate(m)} />
-          ))}
+          {list.map((m) =>
+            m.draft ? (
+              <DraftRow key={m.id} goal={m} parents={quarter.data ?? []} why="Needs a quarter goal" />
+            ) : (
+              <GoalCheck key={m.id} goal={m} tag={quarterById.get(m.parent_id ?? -1)} onToggle={() => toggle.mutate(m)} />
+            ),
+          )}
           {milestones.isSuccess && list.length === 0 && <p className="empty">No milestones this month yet.</p>}
         </section>
       </div>

@@ -65,3 +65,5 @@ dialog .slot{grid-template-columns:120px 1fr auto}
 .setting input[type=time]{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--surface)}
 .slotrow{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:8px;align-items:center;padding:6px 0}
 .slotrow input[type=time]{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--surface)}
+.link.quiet{font-size:11px;color:var(--muted);font-weight:500}
+.titlerow{display:flex;gap:12px;align-items:baseline;justify-content:space-between}

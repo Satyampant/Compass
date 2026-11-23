@@ -219,6 +219,7 @@ export const blocksApi = {
 
 export interface CalendarStatus {
   connected: boolean
+  ever_connected: boolean
   error: string | null
   at: string | null
 }

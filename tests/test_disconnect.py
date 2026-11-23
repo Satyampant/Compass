@@ -56,3 +56,26 @@ def test_a_failed_pull_does_not_undo_the_callers_changes(session, fake_clock):
     session.commit()
     session.expire_all()
     assert settings.get(session, "top_priorities") == 4
+
+
+def test_banner_flag_only_after_a_first_connection(client, session, fake_clock, monkeypatch):
+    from app.modules.day import meetings
+    from app.modules.integrations import gcal
+    from tests.fakes import FakeCalendar
+
+    meetings.pull(session)
+    session.commit()
+    assert client.get("/v1/calendar").json()["ever_connected"] is False
+    monkeypatch.setattr(gcal, "connect", lambda: FakeCalendar())
+    meetings.pull(session)
+    session.commit()
+    from app.modules.integrations.google import NotConnected
+
+    def refuse():
+        raise NotConnected("revoked")
+
+    monkeypatch.setattr(gcal, "connect", refuse)
+    meetings.pull(session)
+    session.commit()
+    status = client.get("/v1/calendar").json()
+    assert status["connected"] is False and status["ever_connected"] is True

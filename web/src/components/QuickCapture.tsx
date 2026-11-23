@@ -5,6 +5,7 @@ import { ageDays } from '../format'
 import { Dialog } from './Dialog'
 import { useToast } from './Toast'
 import { GoalPicker } from './GoalPicker'
+import { useHasGoals } from '../goals'
 
 export type CaptureKind = 'learn' | 'task' | 'note'
 
@@ -26,6 +27,7 @@ export function QuickCapture({ initial, onClose }: { initial: CaptureKind; onClo
   const [minutes, setMinutes] = useState(25)
   const [goalId, setGoalId] = useState<number | null>(null)
   const [reason, setReason] = useState('')
+  const hasGoals = useHasGoals()
   const toast = useToast()
   const qc = useQueryClient()
   const save = useMutation({
@@ -75,7 +77,7 @@ export function QuickCapture({ initial, onClose }: { initial: CaptureKind; onClo
             <input type="number" id="cmin" min={1} max={600} value={minutes} onChange={(e) => setMinutes(Number(e.target.value) || 25)} />
           </>
         )}
-        {kind !== 'note' && (
+        {kind !== 'note' && hasGoals && (
           <>
             <label className="q" htmlFor="cgoal">
               Goal <span className="muted">optional</span>

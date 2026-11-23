@@ -62,3 +62,37 @@ export function paceStatus(progress: number, pace: number): 'on_track' | 'at_ris
   const gap = (pace - progress) * 100
   return gap <= 10 ? 'on_track' : gap <= 20 ? 'at_risk' : 'behind'
 }
+
+/** Delete a goal after a confirm. Its work becomes untied; goals under it ask for a parent. */
+export function useDeleteGoal() {
+  const qc = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: async (g: Goal) => {
+      if (!window.confirm(`Delete “${g.title}”? Its tasks become untied and goals under it will ask for a new parent.`)) return false
+      await goalsApi.remove(g.id)
+      return true
+    },
+    onSuccess: (done) => {
+      if (!done) return
+      qc.invalidateQueries()
+      toast('Goal deleted')
+    },
+  })
+}
+
+/** Confirm a draft by choosing its parent. */
+export function useConfirmDraft() {
+  const qc = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: ({ goal, parent_id }: { goal: Goal; parent_id: number }) => goalsApi.edit(goal.id, { parent_id }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['goals'] }),
+    onError: (err) => toast(err.message),
+  })
+}
+
+/** True once any theme exists. Until then goal fields stay hidden (PRD section 09). */
+export function useHasGoals(): boolean {
+  return (useGoals('year').data?.length ?? 0) > 0
+}

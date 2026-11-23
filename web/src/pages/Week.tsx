@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { api, goalsApi, weekApi, type DayColumn, type Goal, type Task, type Week } from '../api'
+import { api, weekApi, type DayColumn, type Task, type Week } from '../api'
 import { Icon } from '../icons'
 import { day } from '../format'
 import { useToast } from '../components/Toast'
 import { TagLabel } from '../components/GoalPicker'
 import { TaskDialog } from '../components/TaskDialog'
-import { AddGoalDialog } from '../components/goals'
+import { AddGoalDialog, DraftRow } from '../components/goals'
 import { GoalCheck } from './Month'
 import { quarterOf, useGoals, useToggleGoal } from '../goals'
 
@@ -39,35 +39,6 @@ function useMoveTask() {
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['week'] }),
   })
-}
-
-/** A draft outcome from the review. Choosing its milestone confirms it. */
-function DraftRow({ goal, months }: { goal: Goal; months: Goal[] }) {
-  const qc = useQueryClient()
-  const toast = useToast()
-  const confirm = useMutation({
-    mutationFn: (parent_id: number) => goalsApi.edit(goal.id, { parent_id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['goals'] }),
-    onError: (err) => toast(err.message),
-  })
-  return (
-    <div className="decide">
-      <span className="taskbody">
-        <span className="title">{goal.title}</span>
-        <span className="sub">
-          <span className="chip">Draft from the review</span>
-        </span>
-      </span>
-      <select aria-label={`Milestone for ${goal.title}`} value="" onChange={(e) => e.target.value && confirm.mutate(Number(e.target.value))}>
-        <option value="">Choose the milestone it serves</option>
-        {months.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.title}
-          </option>
-        ))}
-      </select>
-    </div>
-  )
 }
 
 function Card({ task, onOpen }: { task: Task; onOpen: () => void }) {
@@ -156,7 +127,7 @@ export function WeekPage({ today }: { today: string }) {
         )}
         {list.map((o) =>
           o.draft ? (
-            <DraftRow key={o.id} goal={o} months={months.data ?? []} />
+            <DraftRow key={o.id} goal={o} parents={months.data ?? []} why="Needs a milestone" />
           ) : (
             <GoalCheck key={o.id} goal={o} tag={quarterOf(o, byId)} onToggle={() => toggle.mutate(o)} />
           ),

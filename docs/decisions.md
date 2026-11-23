@@ -59,3 +59,8 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - Settings: every rule from PRD section 08 is editable on the Settings screen and checked on the server before any change is stored. Changing learning slots or their length removes upcoming slots that no longer match; their items keep their booking and move to the new slots.
 - Status rows turn to a warning when older than expected: daily jobs after 26 hours, the weekly review after 8 days, calendar sync after 30 minutes, the Telegram check after 5 minutes. The backup is judged by the date in its file name: today's or yesterday's copy is fine.
 - The browser extension sends title and link with channel "extension". The badge shows SAVE, DUP or ERR.
+- First day: with nothing saved, no tasks and no goals, Today shows only the "share your first link" prompt. Goal pickers and "Untied" labels appear once a theme exists.
+- The calendar banner appears only after the calendar has been connected at least once and then stops answering (CAL-4). Before the first sign-in the Status page shows the calendar row.
+- A meeting that leaves no room for a learning slot marks it not kept and returns its item to the top of today's list (PRD section 09), rather than booking the next slot.
+- An empty learning slot gets a reminder too: it suggests the shortest item in the inbox, with Book it and Let go.
+- Deleting a goal unties its tasks and items, and its child goals become drafts that ask for a new parent on their horizon page.

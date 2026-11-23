@@ -89,8 +89,28 @@ def test_trace(client, fake_clock):
     assert client.get("/v1/goals/999/trace").status_code == 404
 
 
-def test_delete_goal(client, fake_clock):
+def test_deleting_a_goal_unties_its_work_and_asks_children_for_a_parent(client, fake_clock):
     year, quarter, month, week = tree(client)
-    assert client.delete(f"/v1/goals/{month['id']}").status_code == 409
-    assert client.delete(f"/v1/goals/{week['id']}").status_code == 204
-    assert client.get("/v1/goals?horizon=week").json() == []
+    task = client.post("/v1/tasks", json={"title": "t", "goal_id": month["id"]}).json()
+    item = client.post(
+        "/v1/captures", json={"text": "https://a.com", "goal_id": month["id"]}
+    ).json()
+    assert client.delete(f"/v1/goals/{month['id']}").status_code == 204
+    orphan = client.get("/v1/goals?horizon=week").json()[0]
+    assert orphan["draft"] is True and orphan["parent_id"] is None
+    assert client.get("/v1/today").json()["tasks"][0]["goal_id"] is None
+    items = client.get("/v1/learning-items?state=inbox").json()
+    assert [i["goal_id"] for i in items if i["id"] == item["item_id"]] == [None]
+    assert task["goal_id"] == month["id"]
+    new = client.post(
+        "/v1/goals", json={"horizon": "month", "title": "M2", "parent_id": quarter["id"]}
+    ).json()
+    r = client.patch(f"/v1/goals/{orphan['id']}", json={"parent_id": new["id"]}).json()
+    assert r["draft"] is False and r["parent_id"] == new["id"]
+
+
+def test_deleting_a_quarter_goal_with_key_results(client, fake_clock):
+    year, quarter, month, week = tree(client)
+    r = client.delete(f"/v1/goals/{quarter['id']}")
+    assert r.status_code == 204
+    assert client.get("/v1/goals?horizon=month").json()[0]["draft"] is True

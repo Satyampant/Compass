@@ -25,7 +25,7 @@ def test_banner_and_highlight_that_moves(browser, server):
     page = context.new_page()
     page.clock.install(time=local(10, 10))
     page.goto(server)
-    expect(page.locator(".calendar-banner")).to_contain_text("Calendar not connected")
+    expect(page.locator(".calendar-banner")).to_have_count(0)  # never connected: no banner
     slot = page.locator(".slot", has_text="Learning: https://k8s.io/services")
     expect(slot).to_have_class(NOW)
     expect(slot.locator(".chip")).to_have_text("Now")
