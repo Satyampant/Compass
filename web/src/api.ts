@@ -142,3 +142,23 @@ export const goalsApi = {
   editKeyResult: (id: number, patch: Partial<{ current: number; target: number; title: string }>) =>
     call<KeyResult>('PATCH', `/v1/key-results/${id}`, patch),
 }
+
+export interface DayColumn {
+  date: string
+  tasks: Task[]
+  planned_min: number
+  capacity_min: number
+  over: boolean
+}
+
+export interface Week {
+  start: string
+  days: DayColumn[]
+  planned_min: number
+  capacity_min: number
+  over: boolean
+}
+
+export const weekApi = {
+  get: () => call<Week>('GET', '/v1/week'),
+}

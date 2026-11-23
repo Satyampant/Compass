@@ -15,6 +15,7 @@ from app.modules.capture.router import router as capture_router
 from app.modules.day.days import router as days_router
 from app.modules.day.router import router as day_router
 from app.modules.day.today import router as today_router
+from app.modules.day.week import router as week_router
 from app.modules.integrations.telegram import Telegram
 from app.modules.learning.router import router as learning_router
 from app.modules.notify.bot import Poller
@@ -52,6 +53,7 @@ app.include_router(learning_router)
 app.include_router(day_router)
 app.include_router(today_router)
 app.include_router(days_router)
+app.include_router(week_router)
 app.include_router(planning_router)
 
 

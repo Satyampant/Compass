@@ -33,3 +33,6 @@ input[type=date]{display:block;width:100%;border:1px solid var(--line);padding:1
 .rank.on{color:var(--rust)}
 .rank.on svg{fill:currentColor}
 .focus .trace{margin-top:14px}
+.kcard.done .title{text-decoration:line-through;color:var(--muted)}
+.colhead span.aging{color:var(--rust);font-weight:600}
+.board.week{grid-template-columns:repeat(7,minmax(128px,1fr))}
