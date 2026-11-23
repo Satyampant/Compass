@@ -25,6 +25,7 @@ class ItemOut(BaseModel):
     url: str | None
     source_type: str
     estimate_min: int
+    progress_min: int
     state: str
     captured_at: datetime
     booked_for: datetime | None
@@ -119,5 +120,21 @@ def make_transition(item_id: int, body: TransitionIn, session: SessionDep) -> It
         booking.move(session, item, body.action, booked_for=body.booked_for, note=body.note)
     except lifecycle.TransitionError as exc:
         raise HTTPException(409, str(exc)) from exc
+    session.commit()
+    return item_out(session, item)
+
+
+class ProgressIn(BaseModel):
+    minutes: int
+
+
+@router.post("/{item_id}/progress")
+def save_progress(item_id: int, body: ProgressIn, session: SessionDep) -> ItemOut:
+    """Add minutes spent on an item, so the next block picks up where you stopped."""
+    item = get_item(session, item_id)
+    if item.state != "learning":
+        raise HTTPException(409, "only an item in Learning has progress to save")
+    item.progress_min = max(item.progress_min + body.minutes, 0)
+    item.version += 1
     session.commit()
     return item_out(session, item)

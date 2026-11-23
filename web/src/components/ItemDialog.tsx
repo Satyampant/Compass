@@ -9,6 +9,20 @@ import { GoalPicker } from './GoalPicker'
 import { useToast } from './Toast'
 
 /** Link an item to a goal, or untie it. Linked items never expire. */
+/** Add minutes to an item in Learning, so the next block picks up where you stopped. */
+function useSaveProgress(item: Item) {
+  const qc = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: (minutes: number) => api.saveProgress(item.id, minutes),
+    onSuccess: (r) => {
+      qc.invalidateQueries()
+      toast(`Progress saved: ${r.progress_min} of ${r.estimate_min} min`)
+    },
+    onError: (err) => toast(err.message),
+  })
+}
+
 function useLinkGoal(item: Item) {
   const qc = useQueryClient()
   const toast = useToast()
@@ -40,6 +54,8 @@ function where(item: Item): string {
 export function ItemDialog({ item, onClose, onStart }: { item: Item; onClose: () => void; onStart?: () => void }) {
   const move = useItemTransition()
   const link = useLinkGoal(item)
+  const progress = useSaveProgress(item)
+  const [spent, setSpent] = useState(25)
   const [goalId, setGoalId] = useState(item.goal_id)
   const [when, setWhen] = useState('')
   const [note, setNote] = useState('')
@@ -86,6 +102,19 @@ export function ItemDialog({ item, onClose, onStart }: { item: Item; onClose: ()
             Or pick a time
           </label>
           <input id="bwhen" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
+        </>
+      )}
+      {item.state === 'learning' && (
+        <>
+          <label className="q" htmlFor="bspent">
+            Minutes spent so far <span className="muted">{item.progress_min} of {item.estimate_min} saved</span>
+          </label>
+          <div className="addtask">
+            <input id="bspent" type="number" min={1} max={600} value={spent} onChange={(e) => setSpent(Number(e.target.value) || 25)} />
+            <button className="btn outline" onClick={() => progress.mutate(spent)}>
+              Save progress
+            </button>
+          </div>
         </>
       )}
       {can('finish') && (

@@ -9,6 +9,7 @@ export interface Item {
   url: string | null
   source_type: string
   estimate_min: number
+  progress_min: number
   state: ItemState
   captured_at: string
   booked_for: string | null
@@ -87,6 +88,7 @@ export const api = {
   addTask: (title: string, estimate_min: number, goal_id: number | null = null) => call<Task>('POST', '/v1/tasks', { title, estimate_min, goal_id }),
   editTask: (id: number, patch: Partial<{ title: string; estimate_min: number; done: boolean; planned_date: string; goal_id: number | null }>) =>
     call<Task>('PATCH', `/v1/tasks/${id}`, patch),
+  saveProgress: (id: number, minutes: number) => call<Item>('POST', `/v1/learning-items/${id}/progress`, { minutes }),
   setTop: (day: string, task_ids: number[]) => call<Task[]>('PUT', `/v1/days/${day}/top-three`, { task_ids }),
   editItem: (id: number, patch: Partial<{ title: string; estimate_min: number; goal_id: number | null; reason: string | null }>) =>
     call<Item>('PATCH', `/v1/learning-items/${id}`, patch),

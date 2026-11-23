@@ -3,7 +3,7 @@
 from sqlalchemy.orm import Session
 
 from app.kernel import jobs, settings
-from app.modules.autopilot import fill, protect
+from app.modules.autopilot import close, fill, protect
 from app.modules.day import blocks, meetings
 
 
@@ -14,6 +14,7 @@ def run(session: Session) -> None:
     """
     blocks.push(session)
     meetings.pull(session)
+    close.run(session)
     if not (settings.get(session, meetings.STATUS_KEY) or {}).get("connected"):
         return
     protect.run(session)

@@ -35,3 +35,10 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - Evening shutdown: steps one to three are ticks on the card (step three ticks itself once tomorrow is planned). The fourth step needs the learned line and closes the day in `daily_logs`.
 - Learning holds at most two items (LQ-8). A new move, return, takes an item from Learning back to Booked on the next free slot and keeps its start time. Starting a third item asks you to finish or return one. Dragging a card into Learned opens the note dialog.
 - Backups run daily at 05:30 (or the first wake after) with SQLite's online backup. They go to the `backup_dir` setting, which defaults to `data/backups` until Google Drive for desktop is installed and the folder is set.
+
+## 23 November 2026 (phase 2 build)
+
+- Google access uses two scopes: read every calendar, and write only to calendars Compass created (`calendar.app.created`). Google itself then stops Compass from changing any other event. The code checks the Compass marker before every write as well.
+- Slots are protected and filled only while the calendar is connected. Without Google, Compass works as in phase 1 and booking still reserves a block in Compass.
+- Fill score: started items, then booked items that lost their slot, then goal-linked items, then older items, then fit. Items pinned to today's list (unbooked, missed or shared again) wait for your decision and are not booked for you.
+- Block statuses: planned, started (when its item starts), kept (a started block once it ends), missed (passed without a start), not_kept (a meeting took the whole day). A block that ends while its item is still in Learning adds the minutes to the item's progress and books the next free slot.

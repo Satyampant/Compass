@@ -47,7 +47,7 @@ def held_items(session: Session, now: datetime) -> set[int]:
             select(TimeBlock.item_id).where(
                 TimeBlock.item_id.is_not(None),
                 TimeBlock.end > now,
-                TimeBlock.status == "planned",
+                TimeBlock.status.in_(("planned", "started")),
             )
         )
     )

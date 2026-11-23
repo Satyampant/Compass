@@ -49,6 +49,11 @@ function Card({ item, onOpen }: { item: Item; onOpen: () => void }) {
           </>
         )}
       </span>
+      {(item.state === 'learning' || (item.state !== 'learned' && item.progress_min > 0)) && (
+        <span className="bar" title={`${item.progress_min} of ${item.estimate_min} min`}>
+          <i style={{ width: `${Math.min(100, (item.progress_min / item.estimate_min) * 100)}%` }} />
+        </span>
+      )}
     </button>
   )
 }

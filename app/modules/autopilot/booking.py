@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.kernel import clock, settings
+from app.kernel import clock, events, settings
 from app.modules.autopilot import fill
 from app.modules.day import blocks
 from app.modules.day.models import TimeBlock
@@ -47,6 +47,14 @@ def release(session: Session, item: LearningItem) -> None:
         fill.detach(session, block)
 
 
+def start_block(session: Session, item: LearningItem) -> None:
+    """Starting an item keeps the block it holds."""
+    block = held_block(session, item)
+    if block:
+        blocks.change(session, block, status="started")
+        events.record(session, "block.kept", "time_block", block.id, item_id=item.id)
+
+
 def move(
     session: Session,
     item: LearningItem,
@@ -66,6 +74,8 @@ def move(
         return item
     was_booked = item.state == "booked"
     lifecycle.transition(session, item, action, booked_for=booked_for, note=note)
+    if action == "start":
+        start_block(session, item)
     if was_booked and action in ("unbook", "let_go"):
         release(session, item)
     return item
