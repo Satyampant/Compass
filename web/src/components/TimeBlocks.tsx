@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { blocksApi, type Block, type Today } from '../api'
 import { useToast } from './Toast'
+import { useResync } from '../calendar'
 import { Dot } from './goals'
 
 const hm = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -28,6 +29,7 @@ type Row = { at: number; mark?: string; block?: Block }
 /** The day from 08:00 to 20:00: meetings and blocks together, the current one highlighted. */
 export function TimeBlocks({ data }: { data: Today }) {
   const now = useNow()
+  const resync = useResync()
   const qc = useQueryClient()
   const toast = useToast()
   const swap = useMutation({
@@ -46,7 +48,12 @@ export function TimeBlocks({ data }: { data: Today }) {
     <section className="card">
       <div className="cardhead">
         <h2>Time blocks</h2>
-        <span className="chip">{Math.round((minutes / 60) * 10) / 10}h blocked</span>
+        <span className="cardtools">
+          <span className="chip">{Math.round((minutes / 60) * 10) / 10}h blocked</span>
+          <button className="link" disabled={resync.isPending} onClick={() => resync.mutate()} title="Rebuild calendar data from scratch">
+            Resync
+          </button>
+        </span>
       </div>
       <div className="section" data-testid="blocks">
         {rows.map((r) => {

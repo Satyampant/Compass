@@ -116,6 +116,10 @@ class FakeCalendar:
             raise PermissionError(f"403: cannot write to {cal}")
 
     def get_event(self, cal, event_id):
+        from app.modules.integrations.gcal import NotFound
+
+        if event_id not in self.store.get(cal, {}):
+            raise NotFound(event_id)
         return self.store[cal][event_id]
 
     def insert_event(self, cal, event):

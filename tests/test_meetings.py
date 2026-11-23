@@ -92,11 +92,9 @@ def test_pull_job_runs_every_ten_minutes(session, fake_clock, calendar):
     assert "b" in blocks(session)
 
 
-def test_calendar_status_endpoint(client, calendar):
-    r = client.get("/v1/calendar").json()
-    assert r == {"connected": True, "error": None, "calendars": ["primary"]}
+def test_calendar_list(client, calendar):
+    assert client.get("/v1/calendar/calendars").json() == ["primary"]
 
 
-def test_calendar_status_when_signed_out(client):
-    r = client.get("/v1/calendar").json()
-    assert r["connected"] is False and r["calendars"] == []
+def test_calendar_list_when_signed_out(client):
+    assert client.get("/v1/calendar/calendars").json() == []

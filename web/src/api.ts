@@ -210,3 +210,14 @@ export interface Block {
 export const blocksApi = {
   swap: (id: number) => call<Block>('POST', `/v1/blocks/${id}/swap`),
 }
+
+export interface CalendarStatus {
+  connected: boolean
+  error: string | null
+  at: string | null
+}
+
+export const calendarApi = {
+  status: () => call<CalendarStatus>('GET', '/v1/calendar'),
+  resync: () => call<CalendarStatus>('POST', '/v1/calendar/resync'),
+}

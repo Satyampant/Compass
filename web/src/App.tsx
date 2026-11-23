@@ -4,6 +4,7 @@ import { api } from './api'
 import { Icon, type IconName } from './icons'
 import { QuickCapture, type CaptureKind } from './components/QuickCapture'
 import { PlanDialog } from './components/PlanDialog'
+import { CalendarBanner } from './components/CalendarBanner'
 import { TodayPage } from './pages/Today'
 import { QueuePage } from './pages/Queue'
 import { MonthPage } from './pages/Month'
@@ -131,6 +132,7 @@ export default function App() {
             </button>
           </div>
         </header>
+        <CalendarBanner />
         <PageView page={page} today={today.data?.date} onCapture={setCapture} onPlan={() => setPlanning(true)} />
       </main>
       {planning && today.data && <PlanDialog today={today.data.date} topLimit={today.data.top_limit} onClose={() => setPlanning(false)} />}

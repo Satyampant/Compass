@@ -136,11 +136,29 @@ def event_body(block: TimeBlock, item_url: str | None = None) -> dict:
     return body
 
 
+def existing(cal: gcal.Calendar, cal_id: str, block: TimeBlock) -> dict | None:
+    """The block's event, or None if it was deleted in Google. A foreign event is returned as
+    is, so the marker check refuses it."""
+    if not block.event_id:
+        return None
+    try:
+        event = cal.get_event(block.calendar_id or cal_id, block.event_id)
+    except gcal.NotFound:
+        return None
+    return None if event.get("status") == "cancelled" and marked(event) else event
+
+
 def push_one(session: Session, cal: gcal.Calendar, cal_id: str, block: TimeBlock) -> None:
     """Write one pending block. An event that lost its marker is left alone."""
     ours(block)
+    event = existing(cal, cal_id, block)
+    if block.event_id and event is None:
+        if block.sync == "delete":
+            session.delete(block)
+            return
+        block.event_id = None
     if block.event_id:
-        if block.calendar_id != cal_id or not marked(cal.get_event(cal_id, block.event_id)):
+        if block.calendar_id != cal_id or not marked(event):
             log.warning("block %s points at an event without the Compass marker", block.id)
             block.sync = "conflict"
             return

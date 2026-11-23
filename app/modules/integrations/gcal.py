@@ -1,5 +1,7 @@
 """Google Calendar over plain HTTP. No business rules live here."""
 
+import os
+
 import httpx
 
 from app.modules.integrations.google import NotConnected, Tokens
@@ -9,6 +11,10 @@ BASE = "https://www.googleapis.com/calendar/v3"
 
 class SyncExpired(RuntimeError):
     """The sync cursor is no longer valid. Start a full sync."""
+
+
+class NotFound(RuntimeError):
+    """The event or calendar does not exist."""
 
 
 class Calendar:
@@ -30,6 +36,8 @@ class Calendar:
             raise NotConnected("Google refused the access token")
         if r.status_code == 410:
             raise SyncExpired(path)
+        if r.status_code == 404:
+            raise NotFound(path)
         r.raise_for_status()
         return r.json() if r.content else {}
 
@@ -74,5 +82,7 @@ class Calendar:
 
 
 def connect() -> Calendar:
-    """The live calendar client. Tests replace this with a fake."""
+    """The live calendar client. COMPASS_GOOGLE=0 turns it off. Tests replace this with a fake."""
+    if os.environ.get("COMPASS_GOOGLE") == "0":
+        raise NotConnected("Google Calendar is turned off for this process")
     return Calendar()

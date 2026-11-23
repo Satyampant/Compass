@@ -23,7 +23,12 @@ window.fetch = (...a) => {
 def server(tmp_path_factory):
     """The real app on a throwaway database per test module, without the scheduler or the bot."""
     db = tmp_path_factory.mktemp("e2e") / "e2e.db"
-    env = {**os.environ, "COMPASS_DB_URL": f"sqlite:///{db}", "COMPASS_BACKGROUND": "0"}
+    env = {
+        **os.environ,
+        "COMPASS_DB_URL": f"sqlite:///{db}",
+        "COMPASS_BACKGROUND": "0",
+        "COMPASS_GOOGLE": "0",
+    }
     proc = subprocess.Popen(
         ["uv", "run", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(PORT)],
         env=env,
