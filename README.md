@@ -13,6 +13,10 @@ make uninstall   # stop and remove the login item
 
 Secrets live in `~/.config/compass/secrets.env` (`TELEGRAM_BOT_TOKEN=...`). After install, send `/start` to the bot from your phone: the first chat to do so is the only one it will answer.
 
+## Browser extension
+
+In Chrome, open `chrome://extensions`, turn on Developer mode, choose **Load unpacked** and pick the `extension` folder. Pin "Compass: save this tab". One click (or Alt+Shift+S) saves the tab; the badge shows SAVE, DUP or ERR.
+
 ## Backups
 
 A copy of the database is made each morning, and the newest 30 are kept. They go to `data/backups` until you point them at your Google Drive folder:

@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Compass: save this tab",
+  "version": "1.0",
+  "description": "One click sends the current tab to the Compass learning queue on this Mac.",
+  "action": { "default_title": "Save this tab to Compass" },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["activeTab"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Save this tab to Compass"
+    }
+  }
+}
