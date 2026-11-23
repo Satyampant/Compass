@@ -36,8 +36,13 @@ def capture(
     key: str,
     at: datetime | None = None,
     kind: str | None = None,
+    goal_id: int | None = None,
+    reason: str | None = None,
 ) -> CaptureResult:
-    """Store a capture once per key. A link becomes an item; plain text waits for a kind."""
+    """Store a capture once per key. A link becomes an item; plain text waits for a kind.
+
+    A goal and a one-line reason, when given, go onto the new item or task.
+    """
     existing = session.scalars(select(Capture).where(Capture.idempotency_key == key)).first()
     if existing:
         return result_of(session, existing)
@@ -48,13 +53,13 @@ def capture(
     session.flush()
     events.record(session, "capture.created", "capture", cap.id, channel=channel)
     if url:
-        return _from_link(session, cap, url, rest, at)
+        return _from_link(session, cap, url, rest, at, goal_id=goal_id, reason=reason)
     if kind:
-        return resolve(session, cap, kind)
+        return resolve(session, cap, kind, goal_id=goal_id, reason=reason)
     return CaptureResult(cap, "pending")
 
 
-def _from_link(session: Session, cap: Capture, url: str, rest: str, at: datetime):
+def _from_link(session: Session, cap: Capture, url: str, rest: str, at: datetime, **links_to):
     digest = links.url_hash(url)
     open_item = session.scalars(
         select(LearningItem).where(
@@ -74,13 +79,21 @@ def _from_link(session: Session, cap: Capture, url: str, rest: str, at: datetime
         url=url,
         url_hash=digest,
         source_type=links.source_type(url),
+        **links_to,
     )
     cap.status, cap.item_id = "item", item.id
     jobs.enqueue(session, "enrich_item", clock.now(), item_id=item.id)
     return CaptureResult(cap, "item", item=item)
 
 
-def resolve(session: Session, cap: Capture, kind: str) -> CaptureResult:
+def resolve(
+    session: Session,
+    cap: Capture,
+    kind: str,
+    *,
+    goal_id: int | None = None,
+    reason: str | None = None,
+) -> CaptureResult:
     """Turn a pending plain-text capture into an item, a task or a note."""
     if cap.status != "pending":
         return result_of(session, cap)
@@ -88,11 +101,18 @@ def resolve(session: Session, cap: Capture, kind: str) -> CaptureResult:
         raise ValueError(f"unknown kind {kind}")
     body = cap.text.strip()
     if kind == "learn":
-        item = lifecycle.create(session, title=body, captured_at=cap.created_at, source_type="note")
+        item = lifecycle.create(
+            session,
+            title=body,
+            captured_at=cap.created_at,
+            source_type="note",
+            goal_id=goal_id,
+            reason=reason,
+        )
         cap.status, cap.item_id = "item", item.id
         return CaptureResult(cap, "item", item=item)
     if kind == "task":
-        task = create_task(session, body, settings.today(session))
+        task = create_task(session, body, settings.today(session), goal_id=goal_id)
         cap.status, cap.task_id = "task", task.id
         return CaptureResult(cap, "task", task=task)
     note = Note(body=body, created_at=cap.created_at)

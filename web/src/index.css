@@ -27,3 +27,4 @@ input[type=date]{display:block;width:100%;border:1px solid var(--line);padding:1
 .setup{max-width:620px}
 .setup-list{list-style:none;margin:0 0 6px;padding:0}
 .setup-list li{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--hair);font-size:14px}
+.untied{font-style:italic;color:var(--muted)}

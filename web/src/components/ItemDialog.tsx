@@ -1,9 +1,26 @@
 import { useState } from 'react'
-import type { Item } from '../api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { api, type Item } from '../api'
 import { Icon } from '../icons'
 import { SOURCE_NAMES, ageDays, slotLabel } from '../format'
 import { useItemTransition } from '../useTransition'
 import { Dialog } from './Dialog'
+import { GoalPicker } from './GoalPicker'
+import { useToast } from './Toast'
+
+/** Link an item to a goal, or untie it. Linked items never expire. */
+function useLinkGoal(item: Item) {
+  const qc = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: (goal_id: number | null) => api.editItem(item.id, { goal_id }),
+    onSuccess: (r) => {
+      qc.invalidateQueries()
+      toast(r.goal_id ? 'Linked. It will wait for a learning block and not expire.' : 'Goal removed')
+    },
+    onError: (err) => toast(err.message),
+  })
+}
 
 function where(item: Item): string {
   const d = ageDays(item.captured_at)
@@ -22,6 +39,8 @@ function where(item: Item): string {
 /** A learning item with only the moves that are valid for its state. */
 export function ItemDialog({ item, onClose }: { item: Item; onClose: () => void }) {
   const move = useItemTransition()
+  const link = useLinkGoal(item)
+  const [goalId, setGoalId] = useState(item.goal_id)
   const [when, setWhen] = useState('')
   const [note, setNote] = useState('')
   const can = (a: string) => item.actions.includes(a as Item['actions'][number])
@@ -42,9 +61,25 @@ export function ItemDialog({ item, onClose }: { item: Item; onClose: () => void 
           </a>
         </p>
       )}
+      {item.reason && <p className="support">{item.reason}</p>}
       <p className="support" style={{ marginTop: 12 }}>
         {where(item)}
       </p>
+      {item.state !== 'learned' && (
+        <>
+          <label className="q" htmlFor="igoal">
+            Goal
+          </label>
+          <GoalPicker
+            id="igoal"
+            value={goalId}
+            onChange={(g) => {
+              setGoalId(g)
+              link.mutate(g)
+            }}
+          />
+        </>
+      )}
       {can('book') && (
         <>
           <label className="q" htmlFor="bwhen">

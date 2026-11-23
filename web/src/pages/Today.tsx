@@ -7,6 +7,8 @@ import { ItemDialog } from '../components/ItemDialog'
 import { useToast } from '../components/Toast'
 import type { CaptureKind } from '../components/QuickCapture'
 import { useGoals } from '../goals'
+import { TagLabel } from '../components/GoalPicker'
+import { TaskDialog } from '../components/TaskDialog'
 
 const SPINES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)']
 
@@ -34,16 +36,19 @@ function useToggleTask() {
   })
 }
 
-function TaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) {
+function TaskRow({ task, onToggle, onOpen }: { task: Task; onToggle: () => void; onOpen: () => void }) {
   const done = !!task.done_at
   return (
     <div className={`task ${done ? 'done' : ''}`}>
       <button className="check" aria-pressed={done} aria-label={`${done ? 'Reopen' : 'Complete'} ${task.title}`} onClick={onToggle}>
         <Icon name="check" />
       </button>
-      <span className="taskbody">
+      <button className="taskbody" onClick={onOpen}>
         <span className="title">{task.title}</span>
-      </span>
+        <span className="sub">
+          <TagLabel tag={task.tag} />
+        </span>
+      </button>
       <span className="chip">
         <Icon name="clock" />
         {dur(task.estimate_min)}
@@ -102,8 +107,10 @@ export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }
   const toggle = useToggleTask()
   const themes = useGoals('year')
   const [openId, setOpenId] = useState<number | null>(null)
+  const [taskId, setTaskId] = useState<number | null>(null)
   if (!data) return null
   const open = data.revisit.find((i) => i.id === openId)
+  const openTask = data.tasks.find((t) => t.id === taskId)
   const done = data.tasks.filter((t) => t.done_at).length
   const dateLine = new Date(`${data.date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
@@ -159,7 +166,7 @@ export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }
             </div>
           )}
           {data.tasks.map((t) => (
-            <TaskRow key={t.id} task={t} onToggle={() => toggle.mutate(t)} />
+            <TaskRow key={t.id} task={t} onToggle={() => toggle.mutate(t)} onOpen={() => setTaskId(t.id)} />
           ))}
           {data.tasks.length === 0 && <p className="empty">Nothing planned yet.</p>}
           <AddTask />
@@ -183,6 +190,7 @@ export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }
         </section>
       </div>
       {open && <ItemDialog item={open} onClose={() => setOpenId(null)} />}
+      {openTask && <TaskDialog task={openTask} onClose={() => setTaskId(null)} />}
     </>
   )
 }

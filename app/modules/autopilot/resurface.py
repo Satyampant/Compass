@@ -1,5 +1,8 @@
 """Bring ignored inbox items back on days 3, 7 and 14, ask once more on day 21, then expire.
 
+An item linked to a goal is a decision already made: after day 14 it waits for a learning
+block and never expires.
+
 The schedule lives on each item (next_resurface_at) and steps count by local date. After a
 sleep the run replays each missed day in order, so it surfaces exactly what on-time runs would
 have. A surfaced item waits on the desk until it has had one day on the revisit list. The
@@ -31,6 +34,8 @@ def advance(session: Session, item: LearningItem, at: datetime, day_end: datetim
             following = steps[n + 1] if n + 1 < len(steps) else last_ask_day
             item.next_resurface_at = item.captured_at + timedelta(days=following)
             item.surfaced_at = at
+        elif item.goal_id is not None:
+            item.next_resurface_at = None
         elif item.last_ask_at is None:
             item.last_ask_at = item.surfaced_at = at
             item.next_resurface_at = at + timedelta(days=grace)

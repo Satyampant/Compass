@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.kernel.db import SessionDep
 from app.modules.capture import service
 from app.modules.capture.models import Capture
+from app.modules.planning.tags import check_goal
 
 router = APIRouter(prefix="/v1/captures", tags=["capture"])
 
@@ -17,6 +18,8 @@ class CaptureIn(BaseModel):
     text: str
     kind: str | None = None
     channel: str = "web"
+    goal_id: int | None = None
+    reason: str | None = None
 
 
 class ResolveIn(BaseModel):
@@ -57,12 +60,15 @@ def create_capture(
         raise HTTPException(422, "nothing to capture")
     if body.kind and body.kind not in service.KINDS:
         raise HTTPException(422, f"kind must be one of {service.KINDS}")
+    check_goal(session, body.goal_id)
     result = service.capture(
         session,
         text=body.text,
         channel=body.channel,
         key=idempotency_key or str(uuid.uuid4()),
         kind=body.kind,
+        goal_id=body.goal_id,
+        reason=(body.reason or "").strip() or None,
     )
     session.commit()
     return out(result)

@@ -4,6 +4,7 @@ import { api } from '../api'
 import { ageDays } from '../format'
 import { Dialog } from './Dialog'
 import { useToast } from './Toast'
+import { GoalPicker } from './GoalPicker'
 
 export type CaptureKind = 'learn' | 'task' | 'note'
 
@@ -23,15 +24,17 @@ export function QuickCapture({ initial, onClose }: { initial: CaptureKind; onClo
   const [kind, setKind] = useState<CaptureKind>(initial)
   const [text, setText] = useState('')
   const [minutes, setMinutes] = useState(25)
+  const [goalId, setGoalId] = useState<number | null>(null)
+  const [reason, setReason] = useState('')
   const toast = useToast()
   const qc = useQueryClient()
   const save = useMutation({
     mutationFn: async () => {
       if (kind === 'task') {
-        await api.addTask(text.trim(), minutes)
+        await api.addTask(text.trim(), minutes, goalId)
         return 'Added to today'
       }
-      const r = await api.capture(text.trim(), kind)
+      const r = await api.capture(text.trim(), kind, kind === 'learn' ? { goal_id: goalId, reason: reason.trim() } : {})
       if (r.outcome === 'duplicate' && r.first_saved_at) {
         const d = ageDays(r.first_saved_at)
         return `Already saved ${d <= 0 ? 'earlier today' : d === 1 ? 'yesterday' : `${d} days ago`}. It is now top of today's list.`
@@ -70,6 +73,22 @@ export function QuickCapture({ initial, onClose }: { initial: CaptureKind; onClo
               Minutes
             </label>
             <input type="number" id="cmin" min={1} max={600} value={minutes} onChange={(e) => setMinutes(Number(e.target.value) || 25)} />
+          </>
+        )}
+        {kind !== 'note' && (
+          <>
+            <label className="q" htmlFor="cgoal">
+              Goal <span className="muted">optional</span>
+            </label>
+            <GoalPicker id="cgoal" value={goalId} onChange={setGoalId} />
+          </>
+        )}
+        {kind === 'learn' && (
+          <>
+            <label className="q" htmlFor="creason">
+              Why save it? <span className="muted">optional</span>
+            </label>
+            <input type="text" id="creason" maxLength={200} placeholder="One line" value={reason} onChange={(e) => setReason(e.target.value)} />
           </>
         )}
         {save.error && <p className="dialog-error">{save.error.message}</p>}

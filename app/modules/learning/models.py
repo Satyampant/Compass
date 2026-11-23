@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from sqlalchemy import Index, Integer, String, Text, text
+from sqlalchemy import ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.kernel.db import Base, UTCDateTime
@@ -41,4 +41,6 @@ class LearningItem(Base):
     started_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     note: Mapped[str | None] = mapped_column(Text)
+    goal_id: Mapped[int | None] = mapped_column(ForeignKey("goals.id"), index=True)
+    reason: Mapped[str | None] = mapped_column(Text)
     version: Mapped[int] = mapped_column(Integer, default=1)

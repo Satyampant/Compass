@@ -52,3 +52,25 @@ def test_year_quarter_month_flow(page):
     go(page, "year")
     expect(page.locator(".theme li", has_text="Ship Equity Backtest")).to_contain_text("62%")
     shot(page, "year")
+
+
+def test_link_task_and_capture_to_goal(page):
+    """Runs after the flow above, so the goal tree exists."""
+    page.get_by_label("New task").fill("Split parity run")
+    page.get_by_role("button", name="Add", exact=True).click()
+    row = page.locator(".task", has_text="Split parity run")
+    expect(row.locator(".untied")).to_have_text("Untied")
+    row.locator(".taskbody").click()
+    page.locator("#tgoal").select_option(label="Ship Equity Backtest v1.0")
+    page.keyboard.press("Escape")
+    expect(row.locator(".gtag")).to_have_text("Backtest")
+
+    page.keyboard.press("c")
+    page.locator("#ctitle").fill("https://clickhouse.example.com/mv")
+    page.locator("#cgoal").select_option(label="Parity tests green")
+    page.locator("#creason").fill("Faster candle roll-ups")
+    page.get_by_role("button", name="Save to queue").click()
+    expect(page.locator(".toast")).to_contain_text("Saved")
+    go(page, "learn")
+    expect(page.locator(".kcard", has_text="clickhouse").locator(".gtag")).to_have_text("Backtest")
+    shot(page, "queue-tagged")

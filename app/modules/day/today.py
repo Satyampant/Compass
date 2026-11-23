@@ -10,7 +10,7 @@ from app.kernel import clock, settings
 from app.kernel.db import SessionDep
 from app.modules.autopilot import resurface
 from app.modules.day.models import Task
-from app.modules.day.router import TaskOut
+from app.modules.day.router import TaskOut, task_out
 from app.modules.learning import slots
 from app.modules.learning.models import LearningItem
 from app.modules.learning.router import ItemOut, item_out
@@ -40,8 +40,8 @@ def today(session: SessionDep) -> TodayOut:
     )
     return TodayOut(
         date=day,
-        tasks=[TaskOut.model_validate(t) for t in tasks],
-        revisit=[item_out(i) for i in resurface.revisit_list(session)],
+        tasks=[task_out(session, t) for t in tasks],
+        revisit=[item_out(session, i) for i in resurface.revisit_list(session)],
         inbox_count=count(LearningItem.state == "inbox"),
         has_items=count() > 0,
         next_slot=slots.next_slot(session, clock.now()),

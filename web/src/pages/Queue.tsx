@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { TagLabel } from '../components/GoalPicker'
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { api, type Action, type Item, type ItemState } from '../api'
 import { Icon } from '../icons'
@@ -31,6 +32,7 @@ function Card({ item, onOpen }: { item: Item; onOpen: () => void }) {
     <button ref={setNodeRef} style={style} className={`kcard ${isDragging ? 'dragging' : ''}`} onClick={onOpen} {...listeners} {...attributes}>
       <span className="title">{item.title}</span>
       <span className="sub">
+        {item.tag && <TagLabel tag={item.tag} />}
         <span>
           {SOURCE_NAMES[item.source_type] ?? item.source_type} · {item.estimate_min} min
         </span>

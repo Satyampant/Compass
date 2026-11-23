@@ -15,8 +15,19 @@ export interface Item {
   started_at: string | null
   closed_at: string | null
   note: string | null
+  goal_id: number | null
+  reason: string | null
+  tag: Tag | null
   version: number
   actions: Action[]
+}
+
+/** The quarter goal a task or item serves. */
+export interface Tag {
+  id: number
+  title: string
+  short: string | null
+  color: number | null
 }
 
 export interface Task {
@@ -25,6 +36,8 @@ export interface Task {
   estimate_min: number
   planned_date: string
   done_at: string | null
+  goal_id: number | null
+  tag: Tag | null
   version: number
 }
 
@@ -59,13 +72,15 @@ async function call<T>(method: string, path: string, body?: unknown, headers: Re
 export const api = {
   today: () => call<Today>('GET', '/v1/today'),
   items: () => call<Item[]>('GET', '/v1/learning-items?state=inbox,booked,learning,learned'),
-  capture: (text: string, kind?: string) =>
-    call<CaptureResult>('POST', '/v1/captures', { text, kind }, { 'Idempotency-Key': crypto.randomUUID() }),
+  capture: (text: string, kind?: string, links: { goal_id?: number | null; reason?: string } = {}) =>
+    call<CaptureResult>('POST', '/v1/captures', { text, kind, ...links }, { 'Idempotency-Key': crypto.randomUUID() }),
   transition: (id: number, action: Action, extra: { booked_for?: string; note?: string } = {}) =>
     call<Item>('POST', `/v1/learning-items/${id}/transitions`, { action, ...extra }),
-  addTask: (title: string, estimate_min: number) => call<Task>('POST', '/v1/tasks', { title, estimate_min }),
-  editTask: (id: number, patch: Partial<{ title: string; estimate_min: number; done: boolean; planned_date: string }>) =>
+  addTask: (title: string, estimate_min: number, goal_id: number | null = null) => call<Task>('POST', '/v1/tasks', { title, estimate_min, goal_id }),
+  editTask: (id: number, patch: Partial<{ title: string; estimate_min: number; done: boolean; planned_date: string; goal_id: number | null }>) =>
     call<Task>('PATCH', `/v1/tasks/${id}`, patch),
+  editItem: (id: number, patch: Partial<{ title: string; estimate_min: number; goal_id: number | null; reason: string | null }>) =>
+    call<Item>('PATCH', `/v1/learning-items/${id}`, patch),
 }
 
 export type Horizon = 'year' | 'quarter' | 'month' | 'week'
