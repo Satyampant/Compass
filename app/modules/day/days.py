@@ -7,8 +7,9 @@ from pydantic import BaseModel, Field
 
 from app.kernel import clock, events
 from app.kernel.db import SessionDep
-from app.modules.day import plan, service
-from app.modules.day.models import DailyLog
+from app.modules.day import blocks_api, plan, service
+from app.modules.day.blocks_api import BlockOut, block_out
+from app.modules.day.models import DailyLog, Task
 from app.modules.day.router import TaskOut, task_out
 
 router = APIRouter(prefix="/v1/days", tags=["day"])
@@ -24,15 +25,27 @@ class DecisionIn(BaseModel):
     to: date | None = None
 
 
+class PlacementIO(BaseModel):
+    task_id: int
+    start: datetime
+    end: datetime
+
+
 class PlanIn(BaseModel):
     decisions: list[DecisionIn] = []
     top: list[int] = []
+    blocks: list[PlacementIO] | None = None
+
+
+class ProposeIn(BaseModel):
+    task_ids: list[int]
 
 
 class PlanDraft(BaseModel):
     date: date
     open: list[TaskOut]
     planned: list[TaskOut]
+    blocks: list[BlockOut]
 
 
 class PlanOut(BaseModel):
@@ -59,7 +72,17 @@ def plan_draft(day: date, session: SessionDep) -> PlanDraft:
         date=day,
         open=[task_out(session, t) for t in plan.open_tasks(session, day)],
         planned=[task_out(session, t) for t in plan.planned(session, day)],
+        blocks=[block_out(session, b) for b in blocks_api.day_blocks(session, day)],
     )
+
+
+@router.post("/{day}/propose")
+def propose(day: date, body: ProposeIn, session: SessionDep) -> list[PlacementIO]:
+    """Blocks for the given tasks around the day's meetings, for you to adjust."""
+    missing = [i for i in body.task_ids if session.get(Task, i) is None]
+    if missing:
+        raise HTTPException(404, f"task {missing[0]} not found")
+    return [PlacementIO(**p.__dict__) for p in plan.propose(session, day, body.task_ids)]
 
 
 @router.post("/{day}/plan")
@@ -68,7 +91,10 @@ def commit_plan(day: date, body: PlanIn, session: SessionDep) -> PlanOut:
         raise HTTPException(422, "a task can hold one rank")
     decisions = [plan.Decision(**d.model_dump()) for d in body.decisions]
     try:
-        log = plan.commit(session, day, decisions, body.top)
+        placements = (
+            None if body.blocks is None else [plan.Placement(**b.model_dump()) for b in body.blocks]
+        )
+        log = plan.commit(session, day, decisions, body.top, placements)
     except (plan.PlanError, LookupError) as exc:
         raise HTTPException(422, str(exc)) from exc
     session.commit()

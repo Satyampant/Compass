@@ -46,3 +46,5 @@ input[type=date]{display:block;width:100%;border:1px solid var(--line);padding:1
 .ritual input[type=text]{margin-top:8px}
 .learned{font-size:15px;margin-top:6px}
 .today-lower{margin-top:20px}
+.slot input[type=time]{width:100%;min-width:0;border:1px solid var(--line);border-radius:6px;padding:4px 6px;background:var(--surface);font:11px var(--mono)}
+dialog .slot{grid-template-columns:120px 1fr auto}

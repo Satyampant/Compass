@@ -177,10 +177,18 @@ export interface Decision {
   to?: string
 }
 
+export interface Placement {
+  task_id: number
+  start: string
+  end: string
+}
+
 export const dayApi = {
   shutdown: (day: string, learned_line: string) => call<{ closed_at: string }>('POST', `/v1/days/${day}/shutdown`, { learned_line }),
-  draft: (day: string) => call<{ date: string; open: Task[]; planned: Task[] }>('GET', `/v1/days/${day}/plan`),
-  plan: (day: string, decisions: Decision[], top: number[]) => call<{ date: string; top: Task[] }>('POST', `/v1/days/${day}/plan`, { decisions, top }),
+  draft: (day: string) => call<{ date: string; open: Task[]; planned: Task[]; blocks: Block[] }>('GET', `/v1/days/${day}/plan`),
+  plan: (day: string, decisions: Decision[], top: number[], blocks?: Placement[]) =>
+    call<{ date: string; top: Task[] }>('POST', `/v1/days/${day}/plan`, { decisions, top, blocks }),
+  propose: (day: string, task_ids: number[]) => call<Placement[]>('POST', `/v1/days/${day}/propose`, { task_ids }),
 }
 
 export interface Block {

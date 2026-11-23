@@ -39,6 +39,10 @@ def test_plan_tomorrow_needs_a_decision_for_each_open_task(page, server):
     dialog.get_by_role("button", name="Investor call").click()
     dialog.get_by_role("button", name="Split parity").click()
     shot(page, "plan-step2")
+    dialog.get_by_role("button", name="Next: place blocks").click()
+    expect(dialog.get_by_label("Start of Investor call")).to_have_value("08:00")
+    dialog.get_by_label("Start of Split parity").fill("10:00")
+    shot(page, "plan-step3")
     dialog.get_by_role("button", name="Commit plan").click()
     expect(page.locator(".toast")).to_contain_text("Tomorrow is planned")
 
@@ -47,6 +51,11 @@ def test_plan_tomorrow_needs_a_decision_for_each_open_task(page, server):
     assert [(t["title"], t["top_rank"]) for t in tasks] == [
         ("Investor call", 1),
         ("Split parity", 2),
+    ]
+    blocks = httpx.get(f"{server}/v1/days/{TOMORROW.isoformat()}/plan").json()["blocks"]
+    assert [(b["title"], b["start"][11:16]) for b in blocks] == [
+        ("Investor call", "02:30"),
+        ("Split parity", "04:30"),
     ]
 
 
