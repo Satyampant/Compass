@@ -6,7 +6,7 @@ Restore a copy into a scratch folder and open the app on it:
 
 Point backups at the Google Drive folder:
 
-    uv run python -m app.kernel.backup set-dir "~/Library/CloudStorage/GoogleDrive-.../My Drive/Compass"
+    uv run python -m app.kernel.backup set-dir "~/.../My Drive/Compass"
 """
 
 import logging
