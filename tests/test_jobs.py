@@ -42,7 +42,10 @@ def test_long_sleep_gives_one_run(session, fake_clock, runs):
 def test_crash_mid_job_runs_once_after_restart(session, fake_clock, runs):
     with scheduler.db.SessionLocal() as s:
         scheduler.ensure_daily(s, fake_clock.now())
-        assert jobs.claim(s, fake_clock.now()) is not None  # claimed, then the process dies
+        claimed = 0
+        while jobs.claim(s, fake_clock.now()):  # every due job claimed, then the process dies
+            claimed += 1
+        assert claimed == len(scheduler.DAILY)
         s.commit()
     assert scheduler.tick() == 0
     scheduler.startup()

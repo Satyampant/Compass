@@ -28,6 +28,8 @@ DEFAULTS: dict[str, object] = {
     "capacity_week_hours": 40,
     "top_priorities": 3,
     "morning_run_time": "06:00",
+    "backup_time": "05:30",
+    "backup_dir": None,
     "shutdown_nudge_time": "19:30",
     "nudges_per_day": 3,
     "pace_on_track_points": 10,

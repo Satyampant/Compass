@@ -34,3 +34,4 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - Plan tomorrow plans the next calendar day. Dropping a task keeps its row with `dropped_at` set, so the weekly review can still count it. Dropped tasks leave Today and the week board.
 - Evening shutdown: steps one to three are ticks on the card (step three ticks itself once tomorrow is planned). The fourth step needs the learned line and closes the day in `daily_logs`.
 - Learning holds at most two items (LQ-8). A new move, return, takes an item from Learning back to Booked on the next free slot and keeps its start time. Starting a third item asks you to finish or return one. Dragging a card into Learned opens the note dialog.
+- Backups run daily at 05:30 (or the first wake after) with SQLite's online backup. They go to the `backup_dir` setting, which defaults to `data/backups` until Google Drive for desktop is installed and the folder is set.

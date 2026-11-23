@@ -43,3 +43,11 @@ def no_network(monkeypatch):
 
     offline = httpx.MockTransport(lambda request: httpx.Response(404))
     monkeypatch.setattr(enrich, "make_client", lambda: httpx.Client(transport=offline))
+
+
+@pytest.fixture(autouse=True)
+def backups_in_tmp(monkeypatch, tmp_path):
+    """Scheduler ticks in tests write backups to a temporary folder, never into data/."""
+    from app.kernel import backup
+
+    monkeypatch.setattr(backup, "backup_dir", lambda session: tmp_path / "backups")

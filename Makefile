@@ -1,4 +1,4 @@
-.PHONY: dev test lint e2e build install uninstall restart logs
+.PHONY: dev test lint e2e build install uninstall restart logs restore
 
 PLIST := $(HOME)/Library/LaunchAgents/com.compass.app.plist
 DOMAIN := gui/$(shell id -u)
@@ -34,3 +34,6 @@ restart:
 
 logs:
 	tail -f $(HOME)/Library/Logs/Compass/compass.log
+
+restore:  ## make restore BACKUP=path/to/compass-YYYY-MM-DD.db INTO=scratch/folder
+	uv run python -m app.kernel.backup restore $(BACKUP) $(INTO)

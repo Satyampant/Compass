@@ -13,7 +13,10 @@ log = logging.getLogger(__name__)
 TICK_SECONDS = 20
 
 # (job kind, setting that holds its local time of day)
-DAILY: list[tuple[str, str]] = [("morning_run", "morning_run_time")]
+DAILY: list[tuple[str, str]] = [
+    ("daily_backup", "backup_time"),
+    ("morning_run", "morning_run_time"),
+]
 
 
 def latest_due(now: datetime, at: str, tz) -> datetime:

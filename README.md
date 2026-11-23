@@ -13,6 +13,15 @@ make uninstall   # stop and remove the login item
 
 Secrets live in `~/.config/compass/secrets.env` (`TELEGRAM_BOT_TOKEN=...`). After install, send `/start` to the bot from your phone: the first chat to do so is the only one it will answer.
 
+## Backups
+
+A copy of the database is made each morning, and the newest 30 are kept. They go to `data/backups` until you point them at your Google Drive folder:
+
+```
+uv run python -m app.kernel.backup set-dir "~/Library/CloudStorage/GoogleDrive-.../My Drive/Compass"
+make restore BACKUP=path/to/compass-YYYY-MM-DD.db INTO=some/scratch/folder   # then open the app on the copy
+```
+
 ## Develop
 
 ```
