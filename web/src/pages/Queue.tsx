@@ -6,6 +6,7 @@ import { api, type Action, type Item, type ItemState } from '../api'
 import { Icon } from '../icons'
 import { SOURCE_NAMES, ageDays, savedAgo, slotLabel } from '../format'
 import { ItemDialog } from '../components/ItemDialog'
+import { WipDialog } from '../components/WipDialog'
 import { useToast } from '../components/Toast'
 import { useItemTransition } from '../useTransition'
 
@@ -17,11 +18,14 @@ const COLS: [ItemState, string, string][] = [
 ]
 
 /** The move a drag between two columns makes, the same as the matching button. */
+const MAX_IN_LEARNING = 2
+
 const DRAG_MOVES: Record<string, Action> = {
   'inbox>booked': 'book',
   'booked>learning': 'start',
   'learning>learned': 'finish',
   'booked>inbox': 'unbook',
+  'learning>booked': 'return',
 }
 
 function Card({ item, onOpen }: { item: Item; onOpen: () => void }) {
@@ -84,13 +88,20 @@ export function QueuePage() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor))
   const by = (s: ItemState) => sortFor(s, items.filter((i) => i.state === s))
   const open = items.find((i) => i.id === openId)
+  const [startingId, setStartingId] = useState<number | null>(null)
+  const inLearning = items.filter((i) => i.state === 'learning')
+  const starting = items.find((i) => i.id === startingId)
+  const start = (id: number) => (inLearning.length >= MAX_IN_LEARNING ? setStartingId(id) : move.mutate({ id, action: 'start' }))
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     const from = active.data.current?.state as ItemState
     const to = over?.id as ItemState | undefined
     if (!to || to === from) return
     const action = DRAG_MOVES[`${from}>${to}`]
-    if (action) move.mutate({ id: Number(active.id), action })
+    const id = Number(active.id)
+    if (action === 'start') start(id)
+    else if (action === 'finish') setOpenId(id)
+    else if (action) move.mutate({ id, action })
     else toast(from === 'inbox' && to === 'learning' ? 'Book it first, then start it' : 'That move is not allowed')
   }
 
@@ -131,7 +142,18 @@ export function QueuePage() {
           </div>
         </section>
       </div>
-      {open && <ItemDialog item={open} onClose={() => setOpenId(null)} />}
+      {open && <ItemDialog item={open} onClose={() => setOpenId(null)} onStart={() => start(open.id)} />}
+      {starting && (
+        <WipDialog
+          starting={starting}
+          learning={inLearning}
+          onClose={() => setStartingId(null)}
+          onFinish={(i) => {
+            setStartingId(null)
+            setOpenId(i.id)
+          }}
+        />
+      )}
     </>
   )
 }

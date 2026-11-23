@@ -37,7 +37,7 @@ function where(item: Item): string {
 }
 
 /** A learning item with only the moves that are valid for its state. */
-export function ItemDialog({ item, onClose }: { item: Item; onClose: () => void }) {
+export function ItemDialog({ item, onClose, onStart }: { item: Item; onClose: () => void; onStart?: () => void }) {
   const move = useItemTransition()
   const link = useLinkGoal(item)
   const [goalId, setGoalId] = useState(item.goal_id)
@@ -91,7 +91,7 @@ export function ItemDialog({ item, onClose }: { item: Item; onClose: () => void 
       {can('finish') && (
         <>
           <label className="q" htmlFor="bnote">
-            What did you take from it, or do with it?
+            What did you take from it, or do with it? <span className="muted">One line, required</span>
           </label>
           <textarea id="bnote" value={note} onChange={(e) => setNote(e.target.value)} />
         </>
@@ -104,15 +104,28 @@ export function ItemDialog({ item, onClose }: { item: Item; onClose: () => void 
           </button>
         )}
         {can('start') && (
-          <button className="btn primary" onClick={() => run('start')}>
+          <button
+            className="btn primary"
+            onClick={() => {
+              if (onStart) {
+                onClose()
+                onStart()
+              } else run('start')
+            }}
+          >
             <Icon name="play" />
             Start now
           </button>
         )}
         {can('finish') && (
-          <button className="btn primary" onClick={() => run('finish', note.trim() ? { note: note.trim() } : {})}>
+          <button className="btn primary" disabled={!note.trim()} onClick={() => run('finish', { note: note.trim() })}>
             <Icon name="check" />
             Mark learned
+          </button>
+        )}
+        {can('return') && (
+          <button className="btn outline" onClick={() => run('return')}>
+            Return to booked
           </button>
         )}
         {can('unbook') && (

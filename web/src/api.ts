@@ -1,7 +1,7 @@
 /** Thin client for the local Compass API. */
 
 export type ItemState = 'inbox' | 'booked' | 'learning' | 'learned' | 'let_go' | 'expired'
-export type Action = 'book' | 'start' | 'finish' | 'unbook' | 'let_go'
+export type Action = 'book' | 'start' | 'finish' | 'return' | 'unbook' | 'let_go'
 
 export interface Item {
   id: number

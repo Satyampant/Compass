@@ -115,7 +115,7 @@ def edit_item(item_id: int, body: ItemPatch, session: SessionDep) -> ItemOut:
 def make_transition(item_id: int, body: TransitionIn, session: SessionDep) -> ItemOut:
     item = get_item(session, item_id)
     booked_for = body.booked_for
-    if body.action == "book" and booked_for is None:
+    if body.action in lifecycle.NEEDS_TIME and booked_for is None:
         booked_for = slots.next_slot(session, clock.now())
     try:
         lifecycle.transition(session, item, body.action, booked_for=booked_for, note=body.note)

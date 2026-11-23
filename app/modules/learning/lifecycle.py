@@ -2,6 +2,7 @@
 
 from datetime import UTC, date, datetime, timedelta
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.kernel import clock, events, settings
@@ -15,7 +16,9 @@ MOVES: dict[tuple[str, str], str] = {
     ("booked", "unbook"): "inbox",
     ("booked", "let_go"): "let_go",
     ("learning", "finish"): "learned",
+    ("learning", "return"): "booked",
 }
+NEEDS_TIME = {"book", "return"}
 SYSTEM_ACTIONS = {"expire"}
 
 
@@ -57,8 +60,14 @@ def transition(
     target = MOVES.get((item.state, action))
     if target is None:
         raise TransitionError(f"cannot {action} an item that is {item.state}")
-    if action == "book" and booked_for is None:
-        raise TransitionError("book needs a time")
+    if action in NEEDS_TIME and booked_for is None:
+        raise TransitionError(f"{action} needs a time")
+    if action == "finish" and not (note or "").strip():
+        raise TransitionError(
+            "marking learned needs one line: what you took from it or did with it"
+        )
+    if action == "start":
+        check_room(session)
     now = clock.now()
     today = settings.today(session)
     _APPLY[action](item, now, booked_for=booked_for, note=note, today=today)
@@ -68,6 +77,16 @@ def transition(
         session, f"item.{action}", "learning_item", item.id, **{"from": previous, "to": target}
     )
     return item
+
+
+def check_room(session: Session) -> None:
+    """Refuse a third item in Learning. Finish or return one first."""
+    limit = settings.get(session, "max_in_learning")
+    busy = session.scalar(
+        select(func.count()).select_from(LearningItem).where(LearningItem.state == "learning")
+    )
+    if busy >= limit:
+        raise TransitionError(f"{limit} items are in Learning already. Finish or return one first")
 
 
 def leave_desk(item: LearningItem) -> None:
@@ -91,7 +110,11 @@ def _start(item, now, **_):
 
 
 def _finish(item, now, *, note, **_):
-    item.closed_at, item.note = now, note
+    item.closed_at, item.note = now, note.strip()
+
+
+def _return(item, now, *, booked_for, **_):
+    item.booked_for = booked_for.astimezone(UTC)
 
 
 def _unbook(item, now, *, today, **_):
@@ -108,6 +131,7 @@ _APPLY = {
     "book": _book,
     "start": _start,
     "finish": _finish,
+    "return": _return,
     "unbook": _unbook,
     "let_go": _close,
     "expire": _close,

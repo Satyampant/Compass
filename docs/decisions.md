@@ -21,7 +21,7 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - Revisit list: a resurfaced item gets one day on the list, then leaves until its next step. At most three a day; items that do not fit wait for the next day.
 - Catch-up: after a sleep the morning run replays each missed day in order, so the list matches an always-on system (AP-4).
 - Booking in phase 0, from a drag or the bot's Book button, takes the next learning slot from settings. The item dialog can also pick a time.
-- Marking learned takes an optional note in phase 0. It becomes required in phase 1 (LQ-6).
+- Marking learned took an optional note in phase 0. From phase 1 it is required (LQ-6).
 
 ## 23 November 2026 (phase 1 build)
 
@@ -33,3 +33,4 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - A capture can carry a goal and a one-line reason. The reason is stored on the item (`learning_items.reason`).
 - Plan tomorrow plans the next calendar day. Dropping a task keeps its row with `dropped_at` set, so the weekly review can still count it. Dropped tasks leave Today and the week board.
 - Evening shutdown: steps one to three are ticks on the card (step three ticks itself once tomorrow is planned). The fourth step needs the learned line and closes the day in `daily_logs`.
+- Learning holds at most two items (LQ-8). A new move, return, takes an item from Learning back to Booked on the next free slot and keeps its start time. Starting a third item asks you to finish or return one. Dragging a card into Learned opens the note dialog.

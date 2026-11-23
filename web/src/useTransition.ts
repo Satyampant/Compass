@@ -3,7 +3,7 @@ import { api, type Action, type Item, type ItemState } from './api'
 import { useToast } from './components/Toast'
 import { slotLabel } from './format'
 
-const TARGET: Record<Action, ItemState> = { book: 'booked', start: 'learning', finish: 'learned', unbook: 'inbox', let_go: 'let_go' }
+const TARGET: Record<Action, ItemState> = { book: 'booked', start: 'learning', finish: 'learned', return: 'booked', unbook: 'inbox', let_go: 'let_go' }
 
 function message(item: Item): string {
   switch (item.state) {

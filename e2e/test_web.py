@@ -88,8 +88,15 @@ def test_every_move_by_clicks_and_by_drag(page):
     expect(card(page, "Booked", "drag.example.com")).to_be_visible()
     drag(page, card(page, "Booked", "drag.example.com"), "Learning")
     expect(card(page, "Learning", "drag.example.com")).to_be_visible()
+    drag(page, card(page, "Learning", "drag.example.com"), "Booked")
+    expect(card(page, "Booked", "drag.example.com")).to_be_visible()
+    drag(page, card(page, "Booked", "drag.example.com"), "Learning")
+    expect(card(page, "Learning", "drag.example.com")).to_be_visible()
     drag(page, card(page, "Learning", "drag.example.com"), "Learned")
-    expect(card(page, "Learned", "Learned")).to_be_visible()
+    expect(page.get_by_role("button", name="Mark learned")).to_be_disabled()
+    page.locator("#bnote").fill("Notes saved")
+    page.get_by_role("button", name="Mark learned").click()
+    expect(card(page, "Learned", "Notes saved")).to_be_visible()
     shot(page, "queue")
 
     # let go
@@ -122,3 +129,22 @@ def test_dark_mode(browser, server):
     assert bg == "rgb(19, 25, 21)"
     shot(pg, "queue-dark")
     context.close()
+
+
+def test_third_item_in_learning_asks_to_finish_or_return_one(page):
+    page.goto(page.url.split("#")[0] + "#learn")
+    for name in ("one", "two", "three"):
+        capture(page, f"https://wip.example.com/{name}")
+        expect(page.locator(".toast")).to_contain_text("Saved")
+        drag(page, card(page, "Inbox", f"wip.example.com/{name}"), "Booked")
+    for name in ("one", "two"):
+        drag(page, card(page, "Booked", f"wip.example.com/{name}"), "Learning")
+    drag(page, card(page, "Booked", "wip.example.com/three"), "Learning")
+    dialog = page.locator("dialog")
+    expect(dialog.get_by_role("heading")).to_have_text("Two items are in Learning")
+    dialog.locator(".decide", has_text="wip.example.com/one").get_by_role(
+        "button", name="Return to booked"
+    ).click()
+    settle(page)
+    expect(card(page, "Learning", "wip.example.com/three")).to_be_visible()
+    expect(card(page, "Booked", "wip.example.com/one")).to_be_visible()
