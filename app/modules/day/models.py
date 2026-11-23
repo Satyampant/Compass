@@ -67,6 +67,7 @@ class TimeBlock(Base):
     task_id: Mapped[int | None] = mapped_column(ForeignKey("tasks.id"), index=True)
     item_id: Mapped[int | None] = mapped_column(ForeignKey("learning_items.id"), index=True)
     protected: Mapped[bool] = mapped_column(default=False)
+    slot_at: Mapped[datetime | None] = mapped_column(UTCDateTime, index=True)
     status: Mapped[str] = mapped_column(String(12), default="planned")
     calendar_id: Mapped[str | None] = mapped_column(Text)
     event_id: Mapped[str | None] = mapped_column(Text)

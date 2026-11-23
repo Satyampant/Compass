@@ -6,7 +6,7 @@ from datetime import datetime, time, timedelta
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.kernel import clock, jobs, settings
+from app.kernel import clock, settings
 from app.modules.day import blocks
 from app.modules.day.models import TimeBlock
 from app.modules.integrations import gcal
@@ -111,10 +111,3 @@ def pull(session: Session) -> None:
         set_status(session, False, str(exc))
         return
     set_status(session, True)
-
-
-@jobs.handler("calendar_pull")
-def calendar_pull(session: Session, payload: dict) -> None:
-    """Job: every ten minutes while awake. Pending Compass blocks are pushed first."""
-    blocks.push(session)
-    pull(session)

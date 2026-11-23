@@ -47,6 +47,7 @@ def create(
     task_id: int | None = None,
     item_id: int | None = None,
     protected: bool = False,
+    slot_at: datetime | None = None,
 ) -> TimeBlock:
     """A new Compass block, pushed to the calendar on the next push."""
     block = TimeBlock(
@@ -58,6 +59,7 @@ def create(
         task_id=task_id,
         item_id=item_id,
         protected=protected,
+        slot_at=slot_at,
         sync="push",
         created_at=clock.now(),
     )
