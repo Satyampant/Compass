@@ -42,7 +42,8 @@ def today(session: SessionDep) -> TodayOut:
     day = settings.today(session)
     tasks = session.scalars(
         select(Task).where(
-            or_(Task.planned_date == day, (Task.planned_date < day) & Task.done_at.is_(None))
+            or_(Task.planned_date == day, (Task.planned_date < day) & Task.done_at.is_(None)),
+            Task.dropped_at.is_(None),
         )
     )
     ranked = lambda t: t.top_rank if t.planned_date == day and t.top_rank else None  # noqa: E731

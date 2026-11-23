@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from './api'
 import { Icon, type IconName } from './icons'
 import { QuickCapture, type CaptureKind } from './components/QuickCapture'
+import { PlanDialog } from './components/PlanDialog'
 import { TodayPage } from './pages/Today'
 import { QueuePage } from './pages/Queue'
 import { MonthPage } from './pages/Month'
@@ -59,6 +60,7 @@ export default function App() {
   const page = useHash()
   const [capture, setCapture] = useState<CaptureKind | null>(null)
   const [menu, setMenu] = useState(false)
+  const [planning, setPlanning] = useState(false)
   const today = useQuery({ queryKey: ['today'], queryFn: api.today })
 
   useEffect(() => {
@@ -118,6 +120,11 @@ export default function App() {
             <strong>{NAMES[page]}</strong>
           </div>
           <div className="tools">
+            {today.data && (
+              <button className="btn outline" onClick={() => setPlanning(true)}>
+                Plan tomorrow
+              </button>
+            )}
             <button className="btn primary" onClick={() => setCapture('learn')}>
               <Icon name="plus" />
               Quick capture <kbd>C</kbd>
@@ -126,6 +133,7 @@ export default function App() {
         </header>
         <PageView page={page} today={today.data?.date} onCapture={setCapture} />
       </main>
+      {planning && today.data && <PlanDialog today={today.data.date} topLimit={today.data.top_limit} onClose={() => setPlanning(false)} />}
       {capture && <QuickCapture initial={capture} onClose={() => setCapture(null)} />}
     </div>
   )

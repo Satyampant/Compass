@@ -162,3 +162,15 @@ export interface Week {
 export const weekApi = {
   get: () => call<Week>('GET', '/v1/week'),
 }
+
+export type DecisionAction = 'tomorrow' | 'reschedule' | 'drop'
+export interface Decision {
+  task_id: number
+  action: DecisionAction
+  to?: string
+}
+
+export const dayApi = {
+  draft: (day: string) => call<{ date: string; open: Task[]; planned: Task[] }>('GET', `/v1/days/${day}/plan`),
+  plan: (day: string, decisions: Decision[], top: number[]) => call<{ date: string; top: Task[] }>('POST', `/v1/days/${day}/plan`, { decisions, top }),
+}

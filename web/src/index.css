@@ -36,3 +36,9 @@ input[type=date]{display:block;width:100%;border:1px solid var(--line);padding:1
 .kcard.done .title{text-decoration:line-through;color:var(--muted)}
 .colhead span.aging{color:var(--rust);font-weight:600}
 .board.week{grid-template-columns:repeat(7,minmax(128px,1fr))}
+.decide{padding:12px 0;border-bottom:1px solid var(--hair);display:grid;gap:8px}
+.decide .strip{margin:0}
+.picklist{display:grid;gap:6px;margin-top:12px}
+.picklist .soft{display:flex;gap:10px;align-items:center;text-align:left;padding:10px 12px}
+.rankno{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);font:11px var(--mono);flex:none}
+.selected .rankno{background:var(--accent);color:var(--btn-ink);border-color:var(--accent)}

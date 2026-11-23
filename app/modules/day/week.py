@@ -42,7 +42,7 @@ def week(session: SessionDep, on: date | None = None) -> WeekOut:
     end = start + timedelta(days=6)
     tasks = session.scalars(
         select(Task)
-        .where(Task.planned_date.between(start, end))
+        .where(Task.planned_date.between(start, end), Task.dropped_at.is_(None))
         .order_by(Task.top_rank.is_(None), Task.top_rank, Task.created_at)
     ).all()
     days = []

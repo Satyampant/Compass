@@ -29,6 +29,7 @@ class Task(Base):
     goal_id: Mapped[int | None] = mapped_column(ForeignKey("goals.id"), index=True)
     top_rank: Mapped[int | None] = mapped_column(Integer)
     done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    dropped_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     version: Mapped[int] = mapped_column(Integer, default=1)
 
