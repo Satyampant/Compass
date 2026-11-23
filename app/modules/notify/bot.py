@@ -9,6 +9,7 @@ import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+import httpx
 from sqlalchemy.orm import Session
 
 from app.kernel import clock, db, settings
@@ -155,6 +156,9 @@ class Poller(threading.Thread):
         while not self.stopped.is_set():
             try:
                 poll_once(self.tg)
+            except httpx.TransportError as exc:
+                log.warning("telegram unreachable, retrying: %s", exc)
+                self.stopped.wait(5)
             except Exception:
                 log.exception("telegram poll failed")
                 self.stopped.wait(5)
