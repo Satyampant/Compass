@@ -60,6 +60,17 @@ export function StatusPage() {
           ))}
           {data.failures.length === 0 && <p className="empty">None. Every job finished.</p>}
         </section>
+        <section className="card">
+          <div className="cardhead">
+            <h2>Your data</h2>
+          </div>
+          <p className="support">Everything Compass holds, as one JSON file. It loads into an empty database with <code>uv run python -m app.modules.system.export load FILE</code>.</p>
+          <div className="actions">
+            <a className="btn outline" href="/v1/export" download>
+              Download all data
+            </a>
+          </div>
+        </section>
       </div>
     </>
   )
