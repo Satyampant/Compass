@@ -5,22 +5,28 @@ Both are dropped when they come too late, so a long sleep ends in one brief, not
 
 from datetime import date
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.kernel import clock, jobs, settings
-from app.modules.day.models import DailyLog, TimeBlock
+from app.modules.autopilot import fill
+from app.modules.day import blocks
+from app.modules.day.models import DailyLog, Task, TimeBlock
 from app.modules.learning.models import LearningItem
-from app.modules.learning.telegram import short_time
+from app.modules.notify.bot import Ctx, on_callback
 from app.modules.notify.service import Nudge, send_nudges
 
 
 def block_nudge(session: Session, block: TimeBlock, item: LearningItem) -> Nudge:
-    lines = [f"Learning block at {short_time(session, block.start)}: {item.title}"]
+    minutes = int((block.end - block.start).total_seconds() // 60)
+    when = block.start.astimezone(settings.tz(session)).strftime("%H:%M")
+    lines = [f"{when} learning block: {item.title} · {minutes} min"]
     if item.url:
         lines.append(item.url)
     if item.progress_min:
         lines.append(f"Picks up at {item.progress_min} of {item.estimate_min} min")
-    return Nudge("block_reminder", "\n".join(lines), item_id=item.id)
+    buttons = [[("Swap", f"block:swap:{block.id}"), ("Skip today", f"block:skip:{block.id}")]]
+    return Nudge("block_reminder", "\n".join(lines), buttons, item_id=item.id)
 
 
 @jobs.handler("block_reminder")
@@ -34,10 +40,17 @@ def block_reminder(session: Session, payload: dict) -> None:
     send_nudges(session, [block_nudge(session, block, session.get(LearningItem, block.item_id))])
 
 
-SHUTDOWN_TEXT = (
-    "Time to close the day: tick what got done, decide on today's captures, "
-    "plan tomorrow, and write one line about what you learned."
-)
+def shutdown_text(session: Session, day: date) -> str:
+    """The evening nudge, with how many of today's tasks are still open."""
+    open_count = session.scalar(
+        select(func.count())
+        .select_from(Task)
+        .where(Task.planned_date <= day, Task.done_at.is_(None), Task.dropped_at.is_(None))
+    )
+    if not open_count:
+        return "Time to close the day. Open Compass for the shutdown."
+    tasks = "1 task is" if open_count == 1 else f"{open_count} tasks are"
+    return f"Time to close the day. {tasks} still open."
 
 
 @jobs.handler("shutdown_nudge")
@@ -47,4 +60,22 @@ def shutdown_nudge(session: Session, payload: dict) -> None:
     log = session.get(DailyLog, day)
     if day != settings.today(session) or (log and log.closed_at):
         return
-    send_nudges(session, [Nudge("shutdown", SHUTDOWN_TEXT)])
+    send_nudges(session, [Nudge("shutdown", shutdown_text(session, day))])
+
+
+@on_callback("block")
+def block_tap(session: Session, ctx: Ctx, args: list[str]) -> None:
+    """Swap puts the next best item in the block. Skip today frees it; the item keeps its
+    booking and takes the next free slot on the next cycle."""
+    action, block_id = args[0], int(args[1])
+    block = session.get(TimeBlock, block_id)
+    if block is None or block.status != "planned" or clock.now() >= block.end:
+        ctx.answer("That block has passed")
+        return
+    if action == "swap":
+        item = fill.swap(session, block)
+        ctx.edit(f"Swapped. Now: {item.title}" if item else "Swapped out. Nothing else fits.")
+    elif action == "skip":
+        blocks.change(session, block, status="not_kept", item_id=None)
+        ctx.edit("Skipped today. It moves to the next free learning block.")
+    ctx.answer()

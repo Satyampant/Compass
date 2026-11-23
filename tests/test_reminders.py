@@ -51,10 +51,10 @@ def test_reminder_fifteen_minutes_before_with_title_and_link(session, fake_clock
     booked(session)
     monday = slots(session)[0]
     at(session, fake_clock, monday.start - timedelta(minutes=16))
-    assert [m["text"] for m in tg.sent if "Learning block" in m["text"]] == []
+    assert [m["text"] for m in tg.sent if "learning block" in m["text"]] == []
     at(session, fake_clock, monday.start - timedelta(minutes=15))
-    texts = [m["text"] for m in tg.sent if "Learning block" in m["text"]]
-    assert texts == ["Learning block at Mon 16:00: K8s Services\nhttps://k8s.io/services"]
+    texts = [m["text"] for m in tg.sent if "learning block" in m["text"]]
+    assert texts == ["16:00 learning block: K8s Services · 45 min\nhttps://k8s.io/services"]
 
 
 def test_moved_block_reminds_at_its_new_time_only(session, fake_clock, tg, calendar):
@@ -64,8 +64,8 @@ def test_moved_block_reminds_at_its_new_time_only(session, fake_clock, tg, calen
     session.commit()
     at(session, fake_clock, ist(23, "15:45"))
     at(session, fake_clock, ist(23, "16:15"))
-    texts = [m["text"] for m in tg.sent if "Learning block" in m["text"]]
-    assert texts == ["Learning block at Mon 16:30: K8s Services\nhttps://k8s.io/services"]
+    texts = [m["text"] for m in tg.sent if "learning block" in m["text"]]
+    assert texts == ["16:30 learning block: K8s Services · 45 min\nhttps://k8s.io/services"]
 
 
 def test_shutdown_nudge_at_1930_unless_closed(client, session, fake_clock, tg):
@@ -89,3 +89,32 @@ def test_two_day_sleep_gives_one_message(session, fake_clock, tg, calendar):
     at(session, fake_clock, ist(25, "09:00"))
     assert len(tg.sent) == 1
     assert tg.sent[0]["text"].startswith("Back on your desk")
+
+
+def test_reminder_buttons_swap_and_skip(session, fake_clock, tg, calendar):
+    from app.modules.notify import bot as botmod
+    from tests.test_fill import save
+
+    first = booked(session)
+    save(session, "https://second.example.com")
+    session.commit()
+    monday = slots(session)[0]
+    at(session, fake_clock, monday.start - timedelta(minutes=15))
+    sent = [m for m in tg.sent if "learning block" in m["text"]][0]
+    assert [b[0] for b in sent["buttons"][0]] == ["Swap", "Skip today"]
+    tg.push_tap(ME, f"block:swap:{monday.id}")
+    botmod.poll_once(tg)
+    session.expire_all()
+    assert slots(session)[0].item_id != first.id
+    assert session.get(type(first), first.id).state == "inbox"
+    tg.push_tap(ME, f"block:skip:{monday.id}")
+    botmod.poll_once(tg)
+    session.expire_all()
+    assert slots(session)[0].status == "not_kept" and slots(session)[0].item_id is None
+
+
+def test_shutdown_counts_open_tasks(client, session, fake_clock, tg):
+    client.post("/v1/tasks", json={"title": "a"})
+    client.post("/v1/tasks", json={"title": "b"})
+    at(session, fake_clock, ist(23, "19:31"))
+    assert tg.sent[-1]["text"] == "Time to close the day. 2 tasks are still open."
