@@ -38,6 +38,8 @@ DEFAULTS: dict[str, object] = {
     ],
     "shutdown_nudge_time": "19:30",
     "block_reminder_min": 15,
+    "day_rollup_time": "23:30",
+    "review_time": "18:00",
     "nudges_per_day": 3,
     "pace_on_track_points": 10,
     "pace_at_risk_points": 20,
