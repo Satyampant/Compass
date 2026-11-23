@@ -16,6 +16,7 @@ TICK_SECONDS = 20
 DAILY: list[tuple[str, str]] = [
     ("daily_backup", "backup_time"),
     ("morning_run", "morning_run_time"),
+    ("shutdown_nudge", "shutdown_nudge_time"),
 ]
 
 
@@ -38,7 +39,8 @@ def ensure_daily(session: Session, now: datetime) -> None:
     tz = settings.tz(session)
     for kind, time_key in DAILY:
         due = latest_due(now, settings.get(session, time_key), tz)
-        jobs.enqueue(session, kind, due, key=f"{kind}:{due.astimezone(tz).date()}")
+        day = due.astimezone(tz).date()
+        jobs.enqueue(session, kind, due, key=f"{kind}:{day}", day=day.isoformat())
     for kind, minutes in INTERVALS:
         step = timedelta(minutes=minutes)
         due = EPOCH + (now - EPOCH) // step * step

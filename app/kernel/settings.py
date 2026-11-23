@@ -37,6 +37,7 @@ DEFAULTS: dict[str, object] = {
         {"time": "15:30", "label": "NSE closes", "weekdays": True},
     ],
     "shutdown_nudge_time": "19:30",
+    "block_reminder_min": 15,
     "nudges_per_day": 3,
     "pace_on_track_points": 10,
     "pace_at_risk_points": 20,
