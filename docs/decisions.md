@@ -42,3 +42,12 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - Slots are protected and filled only while the calendar is connected. Without Google, Compass works as in phase 1 and booking still reserves a block in Compass.
 - Fill score: started items, then booked items that lost their slot, then goal-linked items, then older items, then fit. Items pinned to today's list (unbooked, missed or shared again) wait for your decision and are not booked for you.
 - Block statuses: planned, started (when its item starts), kept (a started block once it ends), missed (passed without a start), not_kept (a meeting took the whole day). A block that ends while its item is still in Learning adds the minutes to the item's progress and books the next free slot.
+
+## 23 November 2026 (phase 3 build)
+
+- Alignment counts the day's blocks between 08:00 and 20:00: minutes whose task or item serves a goal, over all block minutes. Meetings count as untied. A day with no blocks uses its tasks' estimates. The direction check reads "On course" from 50%.
+- Learning blocks kept: protected slots started, over all protected slots that week.
+- The review prepare job runs daily at 18:00 and acts only for a Sunday, at the next wake if the Mac slept.
+- The review page opens on last week on Monday and Tuesday while last week is still open, otherwise on this week. Closing keeps the closed week on screen.
+- Closing a week turns each line of "next week's top three" (or "1. a 2. b 3. c") into a draft weekly outcome for next week, up to the limit of three. A draft has no milestone until you choose one on This week.
+- "Where the hours went" counts planned minutes from tasks and learning blocks, and done minutes from done tasks and started blocks.

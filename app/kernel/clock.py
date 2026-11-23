@@ -48,3 +48,8 @@ def local_date(at: datetime, tz) -> date:
 def week_start(day: date) -> date:
     """The Monday of the week containing day."""
     return day - timedelta(days=day.weekday())
+
+
+def combine(day: date, tz) -> datetime:
+    """Midnight at the start of a local date, as an aware moment."""
+    return datetime.combine(day, datetime.min.time(), tz)

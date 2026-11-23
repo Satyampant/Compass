@@ -24,6 +24,7 @@ class Goal(Base):
     due_date: Mapped[date | None]
     short: Mapped[str | None] = mapped_column(String(24))
     color: Mapped[int | None] = mapped_column(Integer)
+    draft: Mapped[bool] = mapped_column(default=False, server_default="0")
     done_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime)
     version: Mapped[int] = mapped_column(Integer, default=1)

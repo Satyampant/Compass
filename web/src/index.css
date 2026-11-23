@@ -50,3 +50,11 @@ input[type=date]{display:block;width:100%;border:1px solid var(--line);padding:1
 dialog .slot{grid-template-columns:120px 1fr auto}
 .calendar-banner{margin-bottom:20px}
 .cardtools{display:inline-flex;gap:12px;align-items:center}
+.flow{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:14px;height:120px}
+.flowweek{display:flex;flex-direction:column;gap:4px;min-width:0}
+.flowbars{flex:1;display:flex;align-items:flex-end;gap:2px}
+.flowbars i{flex:1;border-radius:3px 3px 0 0;min-height:2px}
+.flowbars .in{background:var(--g2)}
+.flowbars .out{background:var(--g1)}
+.flowweek span{font:10px var(--mono);color:var(--muted);text-align:center}
+.legend{display:flex;gap:16px;margin-top:12px;font-size:12px}

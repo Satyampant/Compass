@@ -18,6 +18,7 @@ DAILY: list[tuple[str, str]] = [
     ("morning_run", "morning_run_time"),
     ("shutdown_nudge", "shutdown_nudge_time"),
     ("day_rollup", "day_rollup_time"),
+    ("review_prepare", "review_time"),
 ]
 
 

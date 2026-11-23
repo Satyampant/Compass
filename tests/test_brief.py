@@ -34,7 +34,8 @@ def save_links(session, n):
 def test_brief_arrives_after_first_run_of_day_3(session, fake_clock, tg):
     save_links(session, 2)
     scheduler.tick()
-    assert tg.sent == []  # day 0: nothing to revisit
+    assert [m for m in tg.sent if "desk" in m["text"]] == []  # day 0: nothing to revisit
+    tg.sent.clear()  # the late Sunday review nudge
     fake_clock.advance(days=3, hours=2)
     scheduler.tick()
     scheduler.tick()

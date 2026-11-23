@@ -7,6 +7,7 @@ import { Icon } from '../icons'
 import { SOURCE_NAMES, ageDays, savedAgo, slotLabel } from '../format'
 import { ItemDialog } from '../components/ItemDialog'
 import { WipDialog } from '../components/WipDialog'
+import { QueueFlow } from '../components/History'
 import { useToast } from '../components/Toast'
 import { useItemTransition } from '../useTransition'
 
@@ -133,6 +134,7 @@ export function QueuePage() {
         </div>
       </DndContext>
       <div className="cols even">
+        <QueueFlow />
         <section className="card">
           <div className="cardhead">
             <h2>House rules</h2>

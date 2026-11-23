@@ -7,3 +7,4 @@ from app.modules.day import blocks, meetings  # noqa: F401
 from app.modules.day import telegram as day_telegram  # noqa: F401
 from app.modules.learning import telegram as learning_telegram  # noqa: F401
 from app.modules.review import rollup  # noqa: F401
+from app.modules.review import service as review_service  # noqa: F401

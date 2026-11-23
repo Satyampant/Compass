@@ -39,11 +39,16 @@ def create_goal(
     due_date: date | None = None,
     short: str | None = None,
     color: int | None = None,
+    draft: bool = False,
 ) -> Goal:
-    """Add a goal for the period containing day, checking parent and limits."""
+    """Add a goal for the period containing day, checking parent and limits.
+
+    A draft (a weekly outcome written by the review) may wait for its parent.
+    """
     if horizon not in HORIZONS:
         raise GoalError(f"unknown horizon {horizon}")
-    check_parent(session, horizon, parent_id)
+    if not (draft and parent_id is None):
+        check_parent(session, horizon, parent_id)
     start, end = period(horizon, day)
     check_limit(session, horizon, start)
     if horizon == "quarter" and not 1 <= len(key_results) <= MAX_KEY_RESULTS:
@@ -59,6 +64,7 @@ def create_goal(
         due_date=due_date,
         short=short,
         color=color,
+        draft=draft,
         created_at=clock.now(),
     )
     session.add(goal)
@@ -106,3 +112,11 @@ def add_key_result(session: Session, goal: Goal, kr: KeyResultIn) -> KeyResult:
     session.add(row)
     session.flush()
     return row
+
+
+def confirm_draft(session: Session, goal: Goal, parent_id: int) -> Goal:
+    """Give a draft its parent. It is then an ordinary goal."""
+    check_parent(session, goal.horizon, parent_id)
+    goal.parent_id, goal.draft = parent_id, False
+    events.record(session, "goal.confirmed", "goal", goal.id)
+    return goal

@@ -22,6 +22,7 @@ from app.modules.integrations.telegram import Telegram
 from app.modules.learning.router import router as learning_router
 from app.modules.notify.bot import Poller
 from app.modules.planning.router import router as planning_router
+from app.modules.review.router import router as review_router
 
 WEB = ROOT / "web" / "dist"
 log = logging.getLogger("compass")
@@ -59,6 +60,7 @@ app.include_router(week_router)
 app.include_router(calendar_router)
 app.include_router(blocks_router)
 app.include_router(planning_router)
+app.include_router(review_router)
 
 
 @app.get("/healthz")

@@ -40,6 +40,7 @@ class GoalOut(BaseModel):
     due_date: date | None
     short: str | None
     color: int | None
+    draft: bool
     done: bool
     progress: float
     key_results: list[KeyResultOut]
@@ -74,6 +75,7 @@ class GoalIn(BaseModel):
 
 class GoalPatch(BaseModel):
     title: str | None = None
+    parent_id: int | None = None
     due_date: date | None = None
     short: str | None = None
     color: int | None = None
@@ -103,6 +105,7 @@ def goal_out(session: Session, goal: Goal) -> GoalOut:
         due_date=goal.due_date,
         short=goal.short,
         color=goal.color,
+        draft=goal.draft,
         done=goal.done_at is not None,
         progress=trace.progress(session, goal),
         key_results=[KeyResultOut.model_validate(kr) for kr in krs],
@@ -165,6 +168,13 @@ def create_goal(body: GoalIn, session: SessionDep) -> GoalOut:
 def edit_goal(goal_id: int, body: GoalPatch, session: SessionDep) -> GoalOut:
     goal = get_goal(session, goal_id)
     check_version(goal.version, body.version)
+    if body.parent_id is not None and body.parent_id != goal.parent_id:
+        if not goal.draft:
+            raise HTTPException(409, "only a draft can take a new parent")
+        try:
+            service.confirm_draft(session, goal, body.parent_id)
+        except service.GoalError as exc:
+            raise HTTPException(422, str(exc)) from exc
     for field in ("title", "due_date", "short", "color"):
         if field in body.model_fields_set:
             setattr(goal, field, getattr(body, field))

@@ -116,6 +116,7 @@ export interface Goal {
   due_date: string | null
   short: string | null
   color: number | null
+  draft: boolean
   done: boolean
   progress: number
   key_results: KeyResult[]
@@ -143,7 +144,7 @@ export interface GoalIn {
 export const goalsApi = {
   list: (horizon: Horizon) => call<Goal[]>('GET', `/v1/goals?horizon=${horizon}`),
   create: (goal: GoalIn) => call<Goal>('POST', '/v1/goals', goal),
-  edit: (id: number, patch: Partial<{ title: string; due_date: string | null; done: boolean; short: string; color: number }>) =>
+  edit: (id: number, patch: Partial<{ title: string; due_date: string | null; done: boolean; short: string; color: number; parent_id: number }>) =>
     call<Goal>('PATCH', `/v1/goals/${id}`, patch),
   remove: (id: number) => fetch(`/v1/goals/${id}`, { method: 'DELETE' }),
   trace: (id: number) => call<TraceStep[]>('GET', `/v1/goals/${id}/trace`),
@@ -221,4 +222,51 @@ export interface CalendarStatus {
 export const calendarApi = {
   status: () => call<CalendarStatus>('GET', '/v1/calendar'),
   resync: () => call<CalendarStatus>('POST', '/v1/calendar/resync'),
+}
+
+export interface HoursRow {
+  tag: Tag | null
+  planned_min: number
+  done_min: number
+}
+
+export interface ReviewNumbers {
+  top_done: number
+  top_planned: number
+  aligned_min: number
+  planned_min: number
+  blocks_kept: number
+  blocks_total: number
+  captured: number
+  closed: number
+  hours_by_goal: HoursRow[]
+}
+
+export interface Review {
+  week_start: string
+  week_end: string
+  week_number: number
+  prepared_at: string | null
+  closed_at: string | null
+  numbers: ReviewNumbers
+  answers: Partial<Record<'moved' | 'off_course' | 'still_matter' | 'next_top', string>>
+  expired: Item[]
+  oldest: Item[]
+  drafts: Goal[]
+}
+
+export const reviewApi = {
+  current: () => call<Review>('GET', '/v1/reviews/current'),
+  get: (week: string) => call<Review>('GET', `/v1/reviews/${week}`),
+  answers: (week: string, answers: Review['answers']) => call<Review>('PUT', `/v1/reviews/${week}/answers`, { answers }),
+  close: (week: string) => call<Review>('POST', `/v1/reviews/${week}/close`),
+}
+
+export interface HistoryData {
+  days: { date: string; planned: boolean; closed: boolean }[]
+  weeks: { week_start: string; added: number; closed: number }[]
+}
+
+export const historyApi = {
+  get: () => call<HistoryData>('GET', '/v1/reviews/history'),
 }
