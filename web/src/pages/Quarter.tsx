@@ -5,7 +5,7 @@ import { Icon } from '../icons'
 import { periodDay, quarterSpan } from '../format'
 import { useToast } from '../components/Toast'
 import { AddGoalDialog, Dot } from '../components/goals'
-import { colorVar, pct, useGoals } from '../goals'
+import { colorVar, PACE_LABEL, paceStatus, pct, useGoals } from '../goals'
 
 const krShare = (k: KeyResult) => (k.target ? Math.min(k.current / k.target, 1) : 0)
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0)
@@ -23,7 +23,8 @@ function useEditCurrent() {
         goals?.map((g) => {
           if (!g.key_results.some((k) => k.id === kr.id)) return g
           const key_results = g.key_results.map((k) => (k.id === kr.id ? { ...k, current } : k))
-          return { ...g, key_results, progress: mean(key_results.map(krShare)) }
+          const progress = mean(key_results.map(krShare))
+          return { ...g, key_results, progress, pace_status: g.pace === null ? null : paceStatus(progress, g.pace) }
         }),
       )
       return { before }
@@ -103,12 +104,18 @@ function GoalCard({ goal, theme, onSave }: { goal: Goal; theme?: Goal; onSave: (
         ))}
       </div>
       <aside>
+        {goal.pace_status && (
+          <span className={`chip ${PACE_LABEL[goal.pace_status][0]}`} data-testid={`pace-${goal.id}`}>
+            {PACE_LABEL[goal.pace_status][1]}
+          </span>
+        )}
         <p className="figure" style={{ marginTop: 10 }} data-testid={`progress-${goal.id}`}>
           {pct(goal.progress)}
           <small>%</small>
         </p>
         <div className="pace">
           <i style={{ width: `${pct(goal.progress)}%`, background: colorVar(goal.color) }} />
+          {goal.pace !== null && <em style={{ left: `${pct(goal.pace)}%` }} />}
         </div>
       </aside>
     </div>
@@ -140,7 +147,9 @@ export function QuarterPage({ today }: { today: string }) {
           Day {n} of {of}
         </span>
       </div>
-      <p className="lead">Up to five goals, each with one to three measurable results. Click a number to update it.</p>
+      <p className="lead">
+        Up to five goals, each with one to three measurable results. Click a number to update it. The small tick on each bar marks where you should be today, {Math.round((n / of) * 100)}% through the quarter.
+      </p>
       <section className="card">
         {list.map((g) => (
           <GoalCard key={g.id} goal={g} theme={themeById.get(g.parent_id ?? -1)} onSave={(kr, current) => edit.mutate({ kr, current })} />

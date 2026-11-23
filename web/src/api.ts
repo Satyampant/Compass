@@ -119,6 +119,8 @@ export interface Goal {
   draft: boolean
   done: boolean
   progress: number
+  pace: number | null
+  pace_status: 'on_track' | 'at_risk' | 'behind' | null
   key_results: KeyResult[]
   version: number
 }

@@ -1,3 +1,4 @@
+import re
 from datetime import date
 
 from playwright.sync_api import expect
@@ -37,6 +38,8 @@ def test_year_quarter_month_flow(page):
     settle(page)
     page.reload()
     expect(page.locator(".goal .figure")).to_have_text("62%")
+    expect(page.locator(".goal aside .chip")).to_have_text(re.compile("On track|At risk|Behind"))
+    expect(page.locator(".goal .pace em")).to_have_count(1)
     shot(page, "quarter")
 
     go(page, "month")

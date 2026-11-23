@@ -1,5 +1,7 @@
 """The chain from a goal or task up to its year theme, and progress rolled up from key results."""
 
+from datetime import date
+
 from sqlalchemy import literal, select
 from sqlalchemy.orm import Session
 
@@ -49,3 +51,16 @@ def progress(session: Session, goal: Goal) -> float:
 
 def _mean(values: list[float]) -> float:
     return sum(values) / len(values) if values else 0.0
+
+
+def pace(start: date, end: date, today: date) -> float:
+    """Share of the period gone, counting today: day 54 of 92 is 54 / 92."""
+    total = (end - start).days + 1
+    gone = min(max((today - start).days + 1, 0), total)
+    return gone / total
+
+
+def pace_status(progress: float, pace_share: float, on_track: int, at_risk: int) -> str:
+    """On track within `on_track` points of pace, at risk within `at_risk`, behind beyond."""
+    gap = (pace_share - progress) * 100
+    return "on_track" if gap <= on_track else "at_risk" if gap <= at_risk else "behind"

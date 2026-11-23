@@ -54,3 +54,11 @@ export function useToggleGoal(horizon: 'month' | 'week') {
     onSettled: () => qc.invalidateQueries({ queryKey: ['goals'] }),
   })
 }
+
+export const PACE_LABEL = { on_track: ['good', 'On track'], at_risk: ['', 'At risk'], behind: ['warn', 'Behind'] } as const
+
+/** The same bands as the server: on track within 10 points of pace, at risk within 20. */
+export function paceStatus(progress: number, pace: number): 'on_track' | 'at_risk' | 'behind' {
+  const gap = (pace - progress) * 100
+  return gap <= 10 ? 'on_track' : gap <= 20 ? 'at_risk' : 'behind'
+}

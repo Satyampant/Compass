@@ -43,6 +43,8 @@ class GoalOut(BaseModel):
     draft: bool
     done: bool
     progress: float
+    pace: float | None
+    pace_status: str | None
     key_results: list[KeyResultOut]
     version: int
 
@@ -92,6 +94,16 @@ class KeyResultPatch(BaseModel):
 
 def goal_out(session: Session, goal: Goal) -> GoalOut:
     """Serialise a goal with its progress and key results."""
+    progress = trace.progress(session, goal)
+    pace, status = None, None
+    if goal.horizon == "quarter":
+        pace = trace.pace(goal.period_start, goal.period_end, settings.today(session))
+        status = trace.pace_status(
+            progress,
+            pace,
+            settings.get(session, "pace_on_track_points"),
+            settings.get(session, "pace_at_risk_points"),
+        )
     krs = session.scalars(
         select(KeyResult).where(KeyResult.goal_id == goal.id).order_by(KeyResult.id)
     )
@@ -107,7 +119,9 @@ def goal_out(session: Session, goal: Goal) -> GoalOut:
         color=goal.color,
         draft=goal.draft,
         done=goal.done_at is not None,
-        progress=trace.progress(session, goal),
+        progress=progress,
+        pace=pace,
+        pace_status=status,
         key_results=[KeyResultOut.model_validate(kr) for kr in krs],
         version=goal.version,
     )
