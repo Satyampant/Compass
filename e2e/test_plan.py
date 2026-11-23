@@ -12,7 +12,7 @@ def test_plan_tomorrow_needs_a_decision_for_each_open_task(page, server):
     for title in ("Split parity", "Investor call", "License review", "Cap table v3"):
         httpx.post(f"{server}/v1/tasks", json={"title": title})
     page.reload()
-    page.get_by_role("button", name="Plan tomorrow").click()
+    page.locator("header.bar").get_by_role("button", name="Plan tomorrow").click()
     dialog = page.locator("dialog")
     finish = dialog.get_by_role("button", name="4 left to decide")
     expect(finish).to_be_disabled()
@@ -48,3 +48,24 @@ def test_plan_tomorrow_needs_a_decision_for_each_open_task(page, server):
         ("Investor call", 1),
         ("Split parity", 2),
     ]
+
+
+def test_shutdown_closes_the_day(page):
+    """Runs after planning above, so step three is already ticked."""
+    card = page.locator(".ritual")
+    expect(card.get_by_label("Pick tomorrow’s top three")).to_be_checked()
+    fourth = card.get_by_label("Write one line: what did I learn?")
+    expect(fourth).to_be_disabled()
+    card.get_by_label("Mark what got done, move what didn’t").check()
+    card.get_by_label("Decide on today’s captures").check()
+    expect(fourth).to_be_disabled()
+    card.get_by_label("What did I learn today").fill(
+        "Corporate actions shift every price before the ex-date"
+    )
+    fourth.check()
+    expect(card.locator(".chip")).to_contain_text("Closed")
+    page.reload()
+    expect(page.locator(".ritual .learned")).to_have_text(
+        "Corporate actions shift every price before the ex-date"
+    )
+    shot(page, "shutdown")

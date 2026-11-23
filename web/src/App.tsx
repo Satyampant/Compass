@@ -18,10 +18,10 @@ const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue',
 const ICONS: Record<string, IconName> = { today: 'sun', learn: 'queue', week: 'week', month: 'month', quarter: 'quarter', year: 'year', review: 'review' }
 const READY = new Set<string>(PAGES)
 
-function PageView({ page, today, onCapture }: { page: Page; today?: string; onCapture: (k: CaptureKind) => void }) {
+function PageView({ page, today, onCapture, onPlan }: { page: Page; today?: string; onCapture: (k: CaptureKind) => void; onPlan: () => void }) {
   if (page === 'learn') return <QueuePage />
   if (page === 'setup') return <SetupPage />
-  if (page === 'today' || !today) return <TodayPage onCapture={onCapture} />
+  if (page === 'today' || !today) return <TodayPage onCapture={onCapture} onPlan={onPlan} />
   if (page === 'week') return <WeekPage today={today} />
   if (page === 'month') return <MonthPage today={today} />
   if (page === 'quarter') return <QuarterPage today={today} />
@@ -131,7 +131,7 @@ export default function App() {
             </button>
           </div>
         </header>
-        <PageView page={page} today={today.data?.date} onCapture={setCapture} />
+        <PageView page={page} today={today.data?.date} onCapture={setCapture} onPlan={() => setPlanning(true)} />
       </main>
       {planning && today.data && <PlanDialog today={today.data.date} topLimit={today.data.top_limit} onClose={() => setPlanning(false)} />}
       {capture && <QuickCapture initial={capture} onClose={() => setCapture(null)} />}

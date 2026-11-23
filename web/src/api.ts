@@ -46,6 +46,9 @@ export interface Today {
   date: string
   focus: { task: Task; trace: TraceStep[] } | null
   top_limit: number
+  closed_at: string | null
+  learned_line: string | null
+  tomorrow_planned: boolean
   tasks: Task[]
   revisit: Item[]
   inbox_count: number
@@ -171,6 +174,7 @@ export interface Decision {
 }
 
 export const dayApi = {
+  shutdown: (day: string, learned_line: string) => call<{ closed_at: string }>('POST', `/v1/days/${day}/shutdown`, { learned_line }),
   draft: (day: string) => call<{ date: string; open: Task[]; planned: Task[] }>('GET', `/v1/days/${day}/plan`),
   plan: (day: string, decisions: Decision[], top: number[]) => call<{ date: string; top: Task[] }>('POST', `/v1/days/${day}/plan`, { decisions, top }),
 }

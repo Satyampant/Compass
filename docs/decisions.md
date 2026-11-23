@@ -32,3 +32,4 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - A goal-linked item in the inbox still comes back on days 3, 7 and 14, then waits for a learning block. It gets no last ask and never expires (LQ-7). Removing the goal picks its schedule back up the next morning.
 - A capture can carry a goal and a one-line reason. The reason is stored on the item (`learning_items.reason`).
 - Plan tomorrow plans the next calendar day. Dropping a task keeps its row with `dropped_at` set, so the weekly review can still count it. Dropped tasks leave Today and the week board.
+- Evening shutdown: steps one to three are ticks on the card (step three ticks itself once tomorrow is planned). The fourth step needs the learned line and closes the day in `daily_logs`.

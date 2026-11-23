@@ -1,12 +1,14 @@
 """HTTP API for a day as a whole: its top three and its plan."""
 
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from app.kernel import clock, events
 from app.kernel.db import SessionDep
 from app.modules.day import plan, service
+from app.modules.day.models import DailyLog
 from app.modules.day.router import TaskOut, task_out
 
 router = APIRouter(prefix="/v1/days", tags=["day"])
@@ -74,3 +76,24 @@ def commit_plan(day: date, body: PlanIn, session: SessionDep) -> PlanOut:
     return PlanOut(
         date=day, planned_at=log.planned_at.isoformat(), top=[task_out(session, t) for t in top]
     )
+
+
+class ShutdownIn(BaseModel):
+    learned_line: str = Field(min_length=1, max_length=500)
+
+
+class ShutdownOut(BaseModel):
+    date: date
+    closed_at: datetime
+    learned_line: str
+
+
+@router.post("/{day}/shutdown")
+def shutdown(day: date, body: ShutdownIn, session: SessionDep) -> ShutdownOut:
+    log = session.get(DailyLog, day) or DailyLog(day=day)
+    log.closed_at = clock.now()
+    log.learned_line = body.learned_line.strip()
+    session.add(log)
+    events.record(session, "day.closed", "day", None, day=day.isoformat())
+    session.commit()
+    return ShutdownOut(date=day, closed_at=log.closed_at, learned_line=log.learned_line)

@@ -8,6 +8,7 @@ import type { CaptureKind } from '../components/QuickCapture'
 import { useGoals } from '../goals'
 import { FocusCard } from '../components/Focus'
 import { TodayPlan } from '../components/TodayPlan'
+import { Shutdown } from '../components/Shutdown'
 import { TaskDialog } from '../components/TaskDialog'
 
 const SPINES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)']
@@ -36,7 +37,7 @@ function RevisitRow({ item, onOpen }: { item: Item; onOpen: () => void }) {
 }
 
 /** Today: the day's tasks and what is back on your desk. */
-export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }) {
+export function TodayPage({ onCapture, onPlan }: { onCapture: (k: CaptureKind) => void; onPlan: () => void }) {
   const { data } = useQuery({ queryKey: ['today'], queryFn: api.today })
   const themes = useGoals('year')
   const [openId, setOpenId] = useState<number | null>(null)
@@ -98,6 +99,9 @@ export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }
             </a>
           </div>
         </section>
+      </div>
+      <div className="cols even today-lower">
+        <Shutdown data={data} onPlan={onPlan} />
       </div>
       {open && <ItemDialog item={open} onClose={() => setOpenId(null)} />}
       {openTask && <TaskDialog task={openTask} onClose={() => setTaskId(null)} />}
