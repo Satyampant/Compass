@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.kernel import clock, events
 from app.kernel.db import SessionDep
-from app.modules.learning import lifecycle, slots
+from app.modules.autopilot import booking
+from app.modules.learning import lifecycle
 from app.modules.learning.models import LearningItem
 from app.modules.planning.tags import Tag, check_goal, tag_for
 
@@ -114,11 +115,8 @@ def edit_item(item_id: int, body: ItemPatch, session: SessionDep) -> ItemOut:
 @router.post("/{item_id}/transitions")
 def make_transition(item_id: int, body: TransitionIn, session: SessionDep) -> ItemOut:
     item = get_item(session, item_id)
-    booked_for = body.booked_for
-    if body.action in lifecycle.NEEDS_TIME and booked_for is None:
-        booked_for = slots.next_slot(session, clock.now())
     try:
-        lifecycle.transition(session, item, body.action, booked_for=booked_for, note=body.note)
+        booking.move(session, item, body.action, booked_for=body.booked_for, note=body.note)
     except lifecycle.TransitionError as exc:
         raise HTTPException(409, str(exc)) from exc
     session.commit()

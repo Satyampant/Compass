@@ -196,3 +196,7 @@ export interface Block {
   tag: Tag | null
   version: number
 }
+
+export const blocksApi = {
+  swap: (id: number) => call<Block>('POST', `/v1/blocks/${id}/swap`),
+}

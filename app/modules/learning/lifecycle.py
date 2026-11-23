@@ -57,9 +57,8 @@ def transition(
     note: str | None = None,
 ) -> LearningItem:
     """Move an item, apply what goes with the move and write an event."""
-    target = MOVES.get((item.state, action))
-    if target is None:
-        raise TransitionError(f"cannot {action} an item that is {item.state}")
+    check(item, action)
+    target = MOVES[(item.state, action)]
     if action in NEEDS_TIME and booked_for is None:
         raise TransitionError(f"{action} needs a time")
     if action == "finish" and not (note or "").strip():
@@ -77,6 +76,12 @@ def transition(
         session, f"item.{action}", "learning_item", item.id, **{"from": previous, "to": target}
     )
     return item
+
+
+def check(item: LearningItem, action: str) -> None:
+    """Refuse a move that is not allowed from the item's state, before anything else changes."""
+    if (item.state, action) not in MOVES:
+        raise TransitionError(f"cannot {action} an item that is {item.state}")
 
 
 def check_room(session: Session) -> None:

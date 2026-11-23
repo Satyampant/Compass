@@ -2,8 +2,9 @@
 
 from sqlalchemy.orm import Session
 
-from app.kernel import clock, settings
-from app.modules.learning import lifecycle, slots
+from app.kernel import settings
+from app.modules.autopilot import booking
+from app.modules.learning import lifecycle
 from app.modules.learning.models import LearningItem
 from app.modules.notify.bot import Ctx, on_callback
 
@@ -28,11 +29,10 @@ def item_tap(session: Session, ctx: Ctx, args: list[str]) -> None:
         return
     try:
         if action == "book":
-            when = slots.next_slot(session, clock.now())
-            lifecycle.transition(session, item, "book", booked_for=when)
-            ctx.edit(f"Booked for {short_time(session, when)} · {item.title}")
+            booking.move(session, item, "book")
+            ctx.edit(f"Booked for {short_time(session, item.booked_for)} · {item.title}")
         else:
-            lifecycle.transition(session, item, "let_go")
+            booking.move(session, item, "let_go")
             ctx.edit(f"Let go · {item.title}")
         ctx.answer()
     except lifecycle.TransitionError:

@@ -29,6 +29,7 @@ class LearningItem(Base):
     url_hash: Mapped[str | None] = mapped_column(String(64))
     source_type: Mapped[str] = mapped_column(String(16), default="article")
     estimate_min: Mapped[int] = mapped_column(Integer, default=20)
+    progress_min: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     state: Mapped[str] = mapped_column(String(16), default="inbox", index=True)
     captured_at: Mapped[datetime] = mapped_column(UTCDateTime)
     resurface_count: Mapped[int] = mapped_column(Integer, default=0)

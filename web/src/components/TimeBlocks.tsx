@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import type { Block, Today } from '../api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { blocksApi, type Block, type Today } from '../api'
+import { useToast } from './Toast'
 import { Dot } from './goals'
 
 const hm = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -26,6 +28,14 @@ type Row = { at: number; mark?: string; block?: Block }
 /** The day from 08:00 to 20:00: meetings and blocks together, the current one highlighted. */
 export function TimeBlocks({ data }: { data: Today }) {
   const now = useNow()
+  const qc = useQueryClient()
+  const toast = useToast()
+  const swap = useMutation({
+    mutationFn: blocksApi.swap,
+    onSuccess: (b) => toast(b.item_id ? `Swapped in: ${b.title.replace(/^Learning: /, '')}` : 'Nothing else fits this slot'),
+    onError: (err) => toast(err.message),
+    onSettled: () => qc.invalidateQueries(),
+  })
   const rows: Row[] = [
     ...data.blocks.map((b) => ({ at: new Date(b.start).getTime(), block: b })),
     ...data.marks.map((m) => ({ at: new Date(m.at).getTime(), mark: `${hm(m.at)} · ${m.label}` })),
@@ -57,7 +67,13 @@ export function TimeBlocks({ data }: { data: Today }) {
                 <Dot color={b.tag?.color} />
                 <span>{b.title}</span>
               </span>
-              {chip(b, current)}
+              {b.protected && b.item_id && b.status === 'planned' && new Date(b.start).getTime() > now ? (
+                <button className="link" onClick={() => swap.mutate(b.id)} aria-label={`Swap ${b.title}`}>
+                  Swap
+                </button>
+              ) : (
+                chip(b, current)
+              )}
             </div>
           )
         })}

@@ -14,6 +14,7 @@ from app.kernel import clock, settings
 from app.modules.day import blocks
 from app.modules.day.blocks_api import window
 from app.modules.day.models import TimeBlock
+from app.modules.learning.models import LearningItem
 
 STEP = timedelta(minutes=15)
 
@@ -83,6 +84,9 @@ def resolve(session: Session, slot: TimeBlock) -> None:
     if at != slot.start or slot.status == "not_kept":
         length = slot.end - slot.start
         blocks.change(session, slot, start=at, end=at + length, status="planned")
+        item = session.get(LearningItem, slot.item_id) if slot.item_id else None
+        if item and item.state == "booked":
+            item.booked_for = at
 
 
 def run(session: Session) -> None:

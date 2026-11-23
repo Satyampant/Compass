@@ -2,12 +2,13 @@
 
 from datetime import date, datetime, time
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.kernel import settings
+from app.kernel.db import SessionDep
 from app.modules.day.models import Task, TimeBlock
 from app.modules.learning.models import LearningItem
 from app.modules.planning.tags import Tag, tag_for
@@ -91,3 +92,18 @@ def day_marks(session: Session, day: date) -> list[Mark]:
         for m in settings.get(session, "day_marks")
         if day.weekday() < 5 or not m.get("weekdays")
     ]
+
+
+@router.post("/{block_id}/swap")
+def swap(block_id: int, session: SessionDep) -> BlockOut:
+    """Put the next best item in a protected slot."""
+    from app.modules.autopilot import fill
+
+    block = session.get(TimeBlock, block_id)
+    if block is None:
+        raise HTTPException(404, "block not found")
+    if not block.protected or block.status != "planned":
+        raise HTTPException(409, "only an upcoming learning slot can be swapped")
+    fill.swap(session, block)
+    session.commit()
+    return block_out(session, block)
