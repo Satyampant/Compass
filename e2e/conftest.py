@@ -19,9 +19,9 @@ window.fetch = (...a) => {
 """
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def server(tmp_path_factory):
-    """The real app on a throwaway database, without the scheduler or the bot."""
+    """The real app on a throwaway database per test module, without the scheduler or the bot."""
     db = tmp_path_factory.mktemp("e2e") / "e2e.db"
     env = {**os.environ, "COMPASS_DB_URL": f"sqlite:///{db}", "COMPASS_BACKGROUND": "0"}
     proc = subprocess.Popen(

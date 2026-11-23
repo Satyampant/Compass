@@ -6,6 +6,7 @@ import { dur, ageDays, savedAgo, slotLabel } from '../format'
 import { ItemDialog } from '../components/ItemDialog'
 import { useToast } from '../components/Toast'
 import type { CaptureKind } from '../components/QuickCapture'
+import { useGoals } from '../goals'
 
 const SPINES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)']
 
@@ -99,6 +100,7 @@ function RevisitRow({ item, onOpen }: { item: Item; onOpen: () => void }) {
 export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }) {
   const { data } = useQuery({ queryKey: ['today'], queryFn: api.today })
   const toggle = useToggleTask()
+  const themes = useGoals('year')
   const [openId, setOpenId] = useState<number | null>(null)
   if (!data) return null
   const open = data.revisit.find((i) => i.id === openId)
@@ -116,6 +118,18 @@ export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }
           <h1>{greeting()}</h1>
         </div>
       </div>
+      {themes.isSuccess && themes.data.length === 0 && (
+        <section className="card banner welcome">
+          <div>
+            <p className="kicker">Set your direction</p>
+            <h3 style={{ marginTop: 6 }}>Choose this year’s themes, this quarter’s goals and this week’s outcomes</h3>
+            <p className="support">A guided setup that takes about fifteen minutes.</p>
+          </div>
+          <a className="btn primary" href="#setup">
+            Start setup
+          </a>
+        </section>
+      )}
       {!data.has_items && (
         <section className="card banner welcome">
           <div>

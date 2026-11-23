@@ -8,15 +8,17 @@ import { QueuePage } from './pages/Queue'
 import { MonthPage } from './pages/Month'
 import { QuarterPage } from './pages/Quarter'
 import { YearPage } from './pages/Year'
+import { SetupPage } from './pages/Setup'
 
-const PAGES = ['today', 'learn', 'month', 'quarter', 'year'] as const
+const PAGES = ['today', 'learn', 'month', 'quarter', 'year', 'setup'] as const
 type Page = (typeof PAGES)[number]
-const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year', review: 'Weekly review' }
+const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year', review: 'Weekly review', setup: 'Setup' }
 const ICONS: Record<string, IconName> = { today: 'sun', learn: 'queue', week: 'week', month: 'month', quarter: 'quarter', year: 'year', review: 'review' }
 const READY = new Set<string>(PAGES)
 
 function PageView({ page, today, onCapture }: { page: Page; today?: string; onCapture: (k: CaptureKind) => void }) {
   if (page === 'learn') return <QueuePage />
+  if (page === 'setup') return <SetupPage />
   if (page === 'today' || !today) return <TodayPage onCapture={onCapture} />
   if (page === 'month') return <MonthPage today={today} />
   if (page === 'quarter') return <QuarterPage today={today} />
