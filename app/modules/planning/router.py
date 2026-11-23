@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.kernel import clock, events, settings
 from app.kernel.db import SessionDep
 from app.modules.day.models import Task
-from app.modules.planning import service, trace
+from app.modules.planning import prompts, service, trace
 from app.modules.planning.models import Goal, KeyResult
 from app.modules.planning.periods import period
 
@@ -242,3 +242,16 @@ def edit_key_result(kr_id: int, body: KeyResultPatch, session: SessionDep) -> Ke
     kr.version += 1
     session.commit()
     return KeyResultOut.model_validate(kr)
+
+
+class Prompt(BaseModel):
+    horizon: Horizon
+    starts: date
+    label: str
+
+
+@router.get("/planning/prompts")
+def planning_prompts(session: SessionDep) -> list[Prompt]:
+    """Planning that is open now: next quarter from the 24th of its last month, next year
+    from 1 December."""
+    return [Prompt(**p) for p in prompts.open_prompts(session, settings.today(session))]

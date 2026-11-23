@@ -51,3 +51,5 @@ Changes and answers on top of the PRD, architecture study and build plan in `doc
 - The review page opens on last week on Monday and Tuesday while last week is still open, otherwise on this week. Closing keeps the closed week on screen.
 - Closing a week turns each line of "next week's top three" (or "1. a 2. b 3. c") into a draft weekly outcome for next week, up to the limit of three. A draft has no milestone until you choose one on This week.
 - "Where the hours went" counts planned minutes from tasks and learning blocks, and done minutes from done tasks and started blocks.
+- Planning prompts: next quarter's planning opens on the 24th of the quarter's last month (24 December for Q1), next year's on 1 December. A prompt stays until the period starts or has goals.
+- Pace: day N of a period counts today, so day 54 of 92 is a pace of 59%.

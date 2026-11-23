@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { PlanningPrompt } from '../components/PlanningPrompt'
 import { api, type Item } from '../api'
 import { Icon, sourceIcon } from '../icons'
 import { ageDays, savedAgo, slotLabel } from '../format'
@@ -60,6 +61,7 @@ export function TodayPage({ onCapture, onPlan }: { onCapture: (k: CaptureKind) =
           <h1>{greeting()}</h1>
         </div>
       </div>
+      <PlanningPrompt />
       <FocusCard focus={data.focus} hasTop={data.tasks.some((t) => t.top_rank && t.planned_date === data.date)} onOpen={setTaskId} />
       {themes.isSuccess && themes.data.length === 0 && (
         <section className="card banner welcome">

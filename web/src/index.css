@@ -58,3 +58,4 @@ dialog .slot{grid-template-columns:120px 1fr auto}
 .flowbars .out{background:var(--g1)}
 .flowweek span{font:10px var(--mono);color:var(--muted);text-align:center}
 .legend{display:flex;gap:16px;margin-top:12px;font-size:12px}
+.prompt{margin-bottom:20px}

@@ -10,9 +10,9 @@ export const COLORS = [1, 2, 3, 4, 5]
 export const colorVar = (c: number | null | undefined) => (c ? `var(--g${c})` : 'var(--line)')
 export const pct = (p: number) => Math.round(p * 100)
 
-/** All goals of one horizon in the current period. */
-export function useGoals(horizon: Horizon) {
-  return useQuery({ queryKey: ['goals', horizon], queryFn: () => goalsApi.list(horizon) })
+/** All goals of one horizon in the current period, or in the period containing `on`. */
+export function useGoals(horizon: Horizon, on?: string) {
+  return useQuery({ queryKey: on ? ['goals', horizon, on] : ['goals', horizon], queryFn: () => goalsApi.list(horizon, on) })
 }
 
 /** The quarter goal a goal sits under, for its colour and short label. */

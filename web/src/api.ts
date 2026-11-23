@@ -136,6 +136,7 @@ export interface TraceStep {
 export interface GoalIn {
   horizon: Horizon
   title: string
+  on?: string
   parent_id?: number | null
   due_date?: string | null
   short?: string | null
@@ -144,7 +145,8 @@ export interface GoalIn {
 }
 
 export const goalsApi = {
-  list: (horizon: Horizon) => call<Goal[]>('GET', `/v1/goals?horizon=${horizon}`),
+  list: (horizon: Horizon, on?: string) => call<Goal[]>('GET', `/v1/goals?horizon=${horizon}${on ? `&on=${on}` : ''}`),
+  prompts: () => call<{ horizon: Horizon; starts: string; label: string }[]>('GET', '/v1/planning/prompts'),
   create: (goal: GoalIn) => call<Goal>('POST', '/v1/goals', goal),
   edit: (id: number, patch: Partial<{ title: string; due_date: string | null; done: boolean; short: string; color: number; parent_id: number }>) =>
     call<Goal>('PATCH', `/v1/goals/${id}`, patch),

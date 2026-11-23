@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { PlanningPrompt } from '../components/PlanningPrompt'
 import { goalsApi, type Goal, type KeyResult } from '../api'
 import { Icon } from '../icons'
 import { periodDay, quarterSpan } from '../format'
@@ -147,6 +148,7 @@ export function QuarterPage({ today }: { today: string }) {
           Day {n} of {of}
         </span>
       </div>
+      <PlanningPrompt />
       <p className="lead">
         Up to five goals, each with one to three measurable results. Click a number to update it. The small tick on each bar marks where you should be today, {Math.round((n / of) * 100)}% through the quarter.
       </p>

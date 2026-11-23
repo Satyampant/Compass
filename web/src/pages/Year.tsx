@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '../icons'
+import { PlanningPrompt } from '../components/PlanningPrompt'
 import { day, periodDay } from '../format'
 import { AddGoalDialog, Dot } from '../components/goals'
 import { pct, useGoals } from '../goals'
@@ -25,6 +26,7 @@ export function YearPage({ today }: { today: string }) {
         </div>
         <span>{of - n} days left</span>
       </div>
+      <PlanningPrompt />
       <div className="trio">
         {list.map((t, i) => {
           const goals = (quarter.data ?? []).filter((g) => g.parent_id === t.id)

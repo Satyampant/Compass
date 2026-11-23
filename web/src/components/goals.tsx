@@ -118,11 +118,11 @@ export function GoalFields({ horizon, parents, onSave, saving, error, submitLabe
   )
 }
 
-export function AddGoalDialog({ horizon, parents, onClose }: { horizon: Horizon; parents: Goal[]; onClose: () => void }) {
+export function AddGoalDialog({ horizon, parents, onClose, on, title }: { horizon: Horizon; parents: Goal[]; onClose: () => void; on?: string; title?: string }) {
   const create = useCreateGoal(onClose)
   return (
-    <Dialog title={`Add a ${HORIZON_NAMES[horizon].toLowerCase()}`} onClose={onClose}>
-      <GoalFields horizon={horizon} parents={parents} onSave={(g) => create.mutate(g)} saving={create.isPending} error={create.error?.message} />
+    <Dialog title={title ?? `Add a ${HORIZON_NAMES[horizon].toLowerCase()}`} onClose={onClose}>
+      <GoalFields horizon={horizon} parents={parents} onSave={(g) => create.mutate({ ...g, on })} saving={create.isPending} error={create.error?.message} />
     </Dialog>
   )
 }
