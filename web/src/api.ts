@@ -274,3 +274,12 @@ export interface HistoryData {
 export const historyApi = {
   get: () => call<HistoryData>('GET', '/v1/reviews/history'),
 }
+
+export interface StatusData {
+  rows: { name: string; last: string | null; ok: boolean; detail: string }[]
+  failures: { kind: string; finished_at: string | null; attempts: number; error: string | null }[]
+}
+
+export const systemApi = {
+  status: () => call<StatusData>('GET', '/v1/status'),
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { api } from './api'
+import { api, systemApi } from './api'
 import { Icon, type IconName } from './icons'
 import { QuickCapture, type CaptureKind } from './components/QuickCapture'
 import { PlanDialog } from './components/PlanDialog'
@@ -13,17 +13,19 @@ import { YearPage } from './pages/Year'
 import { SetupPage } from './pages/Setup'
 import { WeekPage } from './pages/Week'
 import { ReviewPage } from './pages/Review'
+import { StatusPage } from './pages/Status'
 
-const PAGES = ['today', 'learn', 'week', 'month', 'quarter', 'year', 'review', 'setup'] as const
+const PAGES = ['today', 'learn', 'week', 'month', 'quarter', 'year', 'review', 'status', 'setup'] as const
 type Page = (typeof PAGES)[number]
-const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year', review: 'Weekly review', setup: 'Setup' }
-const ICONS: Record<string, IconName> = { today: 'sun', learn: 'queue', week: 'week', month: 'month', quarter: 'quarter', year: 'year', review: 'review' }
+const NAMES: Record<string, string> = { today: 'Today', learn: 'Learning queue', week: 'This week', month: 'This month', quarter: 'This quarter', year: 'This year', review: 'Weekly review', status: 'Status', setup: 'Setup' }
+const ICONS: Record<string, IconName> = { today: 'sun', learn: 'queue', week: 'week', month: 'month', quarter: 'quarter', year: 'year', review: 'review', status: 'clock' }
 const READY = new Set<string>(PAGES)
 
 function PageView({ page, today, onCapture, onPlan }: { page: Page; today?: string; onCapture: (k: CaptureKind) => void; onPlan: () => void }) {
   if (page === 'learn') return <QueuePage />
   if (page === 'setup') return <SetupPage />
   if (page === 'review') return <ReviewPage />
+  if (page === 'status') return <StatusPage />
   if (page === 'today' || !today) return <TodayPage onCapture={onCapture} onPlan={onPlan} />
   if (page === 'week') return <WeekPage today={today} />
   if (page === 'month') return <MonthPage today={today} />
@@ -65,6 +67,8 @@ export default function App() {
   const [menu, setMenu] = useState(false)
   const [planning, setPlanning] = useState(false)
   const today = useQuery({ queryKey: ['today'], queryFn: api.today })
+  const status = useQuery({ queryKey: ['status'], queryFn: systemApi.status, refetchInterval: 60_000 })
+  const warnings = status.data?.rows.filter((r) => !r.ok).length
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -108,6 +112,7 @@ export default function App() {
           <div className="navgroup">
             <p className="kicker">Reflect</p>
             <NavItem p="review" page={page} />
+            <NavItem p="status" page={page} count={warnings || undefined} />
           </div>
         </nav>
       </aside>
