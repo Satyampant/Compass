@@ -32,6 +32,10 @@ DEFAULTS: dict[str, object] = {
     "backup_dir": None,
     "calendar_read_ids": ["primary"],
     "calendar_name": "Compass",
+    "day_marks": [
+        {"time": "09:15", "label": "NSE opens", "weekdays": True},
+        {"time": "15:30", "label": "NSE closes", "weekdays": True},
+    ],
     "shutdown_nudge_time": "19:30",
     "nudges_per_day": 3,
     "pace_on_track_points": 10,

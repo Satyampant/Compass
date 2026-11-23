@@ -9,7 +9,8 @@ from sqlalchemy import func, or_, select
 from app.kernel import clock, settings
 from app.kernel.db import SessionDep
 from app.modules.autopilot import resurface
-from app.modules.day import service
+from app.modules.day import blocks_api, service
+from app.modules.day.blocks_api import BlockOut, Mark, block_out
 from app.modules.day.models import DailyLog, Task
 from app.modules.day.router import TaskOut, task_out
 from app.modules.learning import slots
@@ -34,6 +35,8 @@ class TodayOut(BaseModel):
     learned_line: str | None
     tomorrow_planned: bool
     tasks: list[TaskOut]
+    blocks: list[BlockOut]
+    marks: list[Mark]
     revisit: list[ItemOut]
     inbox_count: int
     has_items: bool
@@ -68,6 +71,8 @@ def today(session: SessionDep) -> TodayOut:
         learned_line=log.learned_line if log else None,
         tomorrow_planned=bool(nxt and nxt.planned_at),
         tasks=[task_out(session, t) for t in tasks],
+        blocks=[block_out(session, b) for b in blocks_api.day_blocks(session, day)],
+        marks=blocks_api.day_marks(session, day),
         revisit=[item_out(session, i) for i in resurface.revisit_list(session)],
         inbox_count=count(LearningItem.state == "inbox"),
         has_items=count() > 0,
