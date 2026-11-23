@@ -53,3 +53,22 @@ def focus(tasks: list[Task]) -> Task | None:
     """The first ranked task not yet done."""
     ranked = sorted((t for t in tasks if t.top_rank and not t.done_at), key=lambda t: t.top_rank)
     return ranked[0] if ranked else None
+
+
+def top_three(session: Session, day: date) -> list[Task]:
+    """The ranked tasks of a day, in order, dropped ones left out."""
+    return list(
+        session.scalars(
+            select(Task)
+            .where(Task.planned_date == day, Task.top_rank.is_not(None), Task.dropped_at.is_(None))
+            .order_by(Task.top_rank)
+        )
+    )
+
+
+def top_lines(tasks: list[Task]) -> list[str]:
+    """Numbered lines for the top three, marking the ones done."""
+    return [
+        f"{t.top_rank}. {t.title} · {t.estimate_min} min" + (" (done)" if t.done_at else "")
+        for t in tasks
+    ]

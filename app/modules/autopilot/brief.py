@@ -1,10 +1,11 @@
-"""The morning brief: today's revisit list on the phone, last asks as their own messages."""
+"""The morning brief: today's top three and revisit list on the phone. Last asks go alone."""
 
 from sqlalchemy.orm import Session
 
-from app.kernel import clock, jobs
+from app.kernel import clock, jobs, settings
 from app.modules.autopilot import resurface
 from app.modules.capture.telegram import ago
+from app.modules.day import service as day
 from app.modules.learning.models import LearningItem
 from app.modules.notify.service import Nudge, send_nudges
 
@@ -19,23 +20,27 @@ def last_ask(item: LearningItem) -> Nudge:
     )
 
 
-def brief(items: list[LearningItem]) -> Nudge:
-    """One message listing the rest of today's list, with a row of answers per item."""
-    lines = [f"Back on your desk: {len(items)} item{'s' if len(items) > 1 else ''}"]
+def brief(items: list[LearningItem], top: list[str] = ()) -> Nudge:
+    """One message: the top three first, then the revisit list with a row of answers per item."""
+    lines = ["Today's top three", *top, ""] if top else []
+    if items:
+        lines.append(f"Back on your desk: {len(items)} item{'s' if len(items) > 1 else ''}")
     lines += [f"{n}. {i.title} · {i.estimate_min} min" for n, i in enumerate(items, 1)]
     rows = [
         [(f"{n} Book", f"item:book:{i.id}"), (f"{n} Let go", f"item:let_go:{i.id}")]
         for n, i in enumerate(items, 1)
     ]
-    return Nudge("brief", "\n".join(lines), rows)
+    return Nudge("brief", "\n".join(lines).strip(), rows)
 
 
 def build(session: Session) -> list[Nudge]:
-    """The nudges for this morning, nothing if the list is empty."""
+    """The nudges for this morning, nothing if there is no top three and no revisit list."""
     items = resurface.revisit_list(session)
+    top = day.top_lines(day.top_three(session, settings.today(session)))
     asks = [i for i in items if i.last_ask_at is not None]
     rest = [i for i in items if i.last_ask_at is None]
-    return [last_ask(i) for i in asks] + ([brief(rest)] if rest else [])
+    lead = [brief(rest, top)] if rest or top else []
+    return lead + [last_ask(i) for i in asks]
 
 
 @jobs.handler("morning_brief")

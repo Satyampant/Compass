@@ -45,6 +45,7 @@ class Ctx:
 Handler = Callable[[Session, Ctx, list[str]], None]
 CALLBACKS: dict[str, Handler] = {}
 MESSAGE_HANDLERS: list[Callable[[Session, Ctx], None]] = []
+COMMANDS: dict[str, Callable[[Session, Ctx], None]] = {}
 
 
 def on_callback(prefix: str) -> Callable[[Handler], Handler]:
@@ -52,6 +53,16 @@ def on_callback(prefix: str) -> Callable[[Handler], Handler]:
 
     def wrap(fn: Handler) -> Handler:
         CALLBACKS[prefix] = fn
+        return fn
+
+    return wrap
+
+
+def on_command(name: str) -> Callable:
+    """Register a handler for /name."""
+
+    def wrap(fn):
+        COMMANDS[name] = fn
         return fn
 
     return wrap
@@ -78,6 +89,13 @@ def handle_update(session: Session, update: dict) -> Ctx | None:
             handler(session, ctx, args)
         else:
             ctx.answer("Unknown button")
+    elif message and (message.get("text") or "").startswith("/"):
+        name = message["text"].split()[0][1:].split("@")[0]
+        handler = COMMANDS.get(name)
+        if handler:
+            handler(session, ctx)
+        else:
+            ctx.reply("Commands: " + ", ".join(f"/{c}" for c in sorted(COMMANDS)))
     elif message:
         for fn in MESSAGE_HANDLERS:
             fn(session, ctx)
