@@ -7,6 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.kernel import clock, jobs, settings
+from app.modules.day import blocks
 from app.modules.day.models import TimeBlock
 from app.modules.integrations import gcal
 from app.modules.integrations.google import NotConnected
@@ -48,7 +49,13 @@ def apply(session: Session, calendar_id: str, event: dict) -> None:
         )
     ).first()
     start, end = when(event.get("start", {})), when(event.get("end", {}))
-    keep = event.get("status") != "cancelled" and start and end and not declined(event)
+    keep = (
+        event.get("status") != "cancelled"
+        and start
+        and end
+        and not declined(event)
+        and not blocks.marked(event)
+    )
     if not keep:
         if block:
             session.delete(block)
@@ -108,5 +115,6 @@ def pull(session: Session) -> None:
 
 @jobs.handler("calendar_pull")
 def calendar_pull(session: Session, payload: dict) -> None:
-    """Job: every ten minutes while awake."""
+    """Job: every ten minutes while awake. Pending Compass blocks are pushed first."""
+    blocks.push(session)
     pull(session)
