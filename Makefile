@@ -1,4 +1,4 @@
-.PHONY: dev test lint e2e build install uninstall restart logs restore
+.PHONY: dev test lint e2e build install uninstall restart logs restore google-signin google-signout
 
 PLIST := $(HOME)/Library/LaunchAgents/com.compass.app.plist
 DOMAIN := gui/$(shell id -u)
@@ -37,3 +37,9 @@ logs:
 
 restore:  ## make restore BACKUP=path/to/compass-YYYY-MM-DD.db INTO=scratch/folder
 	uv run python -m app.kernel.backup restore $(BACKUP) $(INTO)
+
+google-signin:  ## sign in to Google once; the refresh token goes to the Keychain
+	uv run python -m app.modules.integrations.google sign-in
+
+google-signout:
+	uv run python -m app.modules.integrations.google sign-out
