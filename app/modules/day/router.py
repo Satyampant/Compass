@@ -23,6 +23,7 @@ class TaskOut(BaseModel):
     done_at: datetime | None
     goal_id: int | None
     tag: Tag | None
+    top_rank: int | None
     version: int
 
 
@@ -52,6 +53,7 @@ def task_out(session: Session, task: Task) -> TaskOut:
         done_at=task.done_at,
         goal_id=task.goal_id,
         tag=tag_for(session, task.goal_id),
+        top_rank=task.top_rank,
         version=task.version,
     )
 
@@ -77,7 +79,9 @@ def edit_task(task_id: int, body: TaskPatch, session: SessionDep) -> TaskOut:
         raise HTTPException(404, "task not found")
     if body.version is not None and body.version != task.version:
         raise HTTPException(409, "task changed elsewhere, reload")
-    for field in ("title", "estimate_min", "planned_date"):
+    if body.planned_date is not None and body.planned_date != task.planned_date:
+        task.planned_date, task.top_rank = body.planned_date, None
+    for field in ("title", "estimate_min"):
         if getattr(body, field) is not None:
             setattr(task, field, getattr(body, field))
     if "goal_id" in body.model_fields_set:

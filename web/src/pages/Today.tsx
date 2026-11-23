@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, type Item, type Task, type Today } from '../api'
+import { useQuery } from '@tanstack/react-query'
+import { api, type Item } from '../api'
 import { Icon, sourceIcon } from '../icons'
-import { dur, ageDays, savedAgo, slotLabel } from '../format'
+import { ageDays, savedAgo, slotLabel } from '../format'
 import { ItemDialog } from '../components/ItemDialog'
-import { useToast } from '../components/Toast'
 import type { CaptureKind } from '../components/QuickCapture'
 import { useGoals } from '../goals'
-import { TagLabel } from '../components/GoalPicker'
+import { FocusCard } from '../components/Focus'
+import { TodayPlan } from '../components/TodayPlan'
 import { TaskDialog } from '../components/TaskDialog'
 
 const SPINES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)']
@@ -15,72 +15,6 @@ const SPINES = ['var(--g1)', 'var(--g2)', 'var(--g3)', 'var(--g4)', 'var(--g5)']
 function greeting(): string {
   const h = new Date().getHours()
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
-}
-
-function useToggleTask() {
-  const qc = useQueryClient()
-  const toast = useToast()
-  return useMutation({
-    mutationFn: (t: Task) => api.editTask(t.id, { done: !t.done_at }),
-    onMutate: async (t) => {
-      await qc.cancelQueries({ queryKey: ['today'] })
-      const before = qc.getQueryData<Today>(['today'])
-      qc.setQueryData<Today>(['today'], (d) => d && { ...d, tasks: d.tasks.map((x) => (x.id === t.id ? { ...x, done_at: x.done_at ? null : new Date().toISOString() } : x)) })
-      return { before }
-    },
-    onError: (err, _t, ctx) => {
-      qc.setQueryData(['today'], ctx?.before)
-      toast(err.message)
-    },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['today'] }),
-  })
-}
-
-function TaskRow({ task, onToggle, onOpen }: { task: Task; onToggle: () => void; onOpen: () => void }) {
-  const done = !!task.done_at
-  return (
-    <div className={`task ${done ? 'done' : ''}`}>
-      <button className="check" aria-pressed={done} aria-label={`${done ? 'Reopen' : 'Complete'} ${task.title}`} onClick={onToggle}>
-        <Icon name="check" />
-      </button>
-      <button className="taskbody" onClick={onOpen}>
-        <span className="title">{task.title}</span>
-        <span className="sub">
-          <TagLabel tag={task.tag} />
-        </span>
-      </button>
-      <span className="chip">
-        <Icon name="clock" />
-        {dur(task.estimate_min)}
-      </span>
-    </div>
-  )
-}
-
-function AddTask() {
-  const [title, setTitle] = useState('')
-  const [minutes, setMinutes] = useState(25)
-  const qc = useQueryClient()
-  const add = useMutation({
-    mutationFn: () => api.addTask(title.trim(), minutes),
-    onSuccess: () => {
-      setTitle('')
-      qc.invalidateQueries({ queryKey: ['today'] })
-    },
-  })
-  return (
-    <form
-      className="addtask"
-      onSubmit={(e) => {
-        e.preventDefault()
-        if (title.trim()) add.mutate()
-      }}
-    >
-      <input type="text" aria-label="New task" placeholder="Add a task for today" value={title} onChange={(e) => setTitle(e.target.value)} />
-      <input type="number" aria-label="Minutes" min={1} max={600} value={minutes} onChange={(e) => setMinutes(Number(e.target.value) || 25)} />
-      <button className="btn outline">Add</button>
-    </form>
-  )
 }
 
 function RevisitRow({ item, onOpen }: { item: Item; onOpen: () => void }) {
@@ -104,14 +38,12 @@ function RevisitRow({ item, onOpen }: { item: Item; onOpen: () => void }) {
 /** Today: the day's tasks and what is back on your desk. */
 export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }) {
   const { data } = useQuery({ queryKey: ['today'], queryFn: api.today })
-  const toggle = useToggleTask()
   const themes = useGoals('year')
   const [openId, setOpenId] = useState<number | null>(null)
   const [taskId, setTaskId] = useState<number | null>(null)
   if (!data) return null
   const open = data.revisit.find((i) => i.id === openId)
   const openTask = data.tasks.find((t) => t.id === taskId)
-  const done = data.tasks.filter((t) => t.done_at).length
   const dateLine = new Date(`${data.date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
@@ -125,6 +57,7 @@ export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }
           <h1>{greeting()}</h1>
         </div>
       </div>
+      <FocusCard focus={data.focus} hasTop={data.tasks.some((t) => t.top_rank && t.planned_date === data.date)} onOpen={setTaskId} />
       {themes.isSuccess && themes.data.length === 0 && (
         <section className="card banner welcome">
           <div>
@@ -147,30 +80,7 @@ export function TodayPage({ onCapture }: { onCapture: (k: CaptureKind) => void }
         </section>
       )}
       <div className="cols">
-        <section className="card">
-          <div className="cardhead">
-            <h2>Today’s plan</h2>
-            <button className="link" onClick={() => onCapture('task')}>
-              <Icon name="plus" />
-              Add task
-            </button>
-          </div>
-          {data.tasks.length > 0 && (
-            <div className="meterwrap">
-              <span>
-                {done} / {data.tasks.length} complete
-              </span>
-              <div className="meter">
-                <i style={{ width: `${(done / data.tasks.length) * 100}%` }} />
-              </div>
-            </div>
-          )}
-          {data.tasks.map((t) => (
-            <TaskRow key={t.id} task={t} onToggle={() => toggle.mutate(t)} onOpen={() => setTaskId(t.id)} />
-          ))}
-          {data.tasks.length === 0 && <p className="empty">Nothing planned yet.</p>}
-          <AddTask />
-        </section>
+        <TodayPlan data={data} onCapture={onCapture} onOpen={setTaskId} />
         <section className="card">
           <div className="cardhead">
             <h2>Time to revisit</h2>

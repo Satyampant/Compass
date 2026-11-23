@@ -74,3 +74,33 @@ def test_link_task_and_capture_to_goal(page):
     go(page, "learn")
     expect(page.locator(".kcard", has_text="clickhouse").locator(".gtag")).to_have_text("Backtest")
     shot(page, "queue-tagged")
+
+
+def test_top_three_focus_and_trace(page):
+    """Runs after the tests above: "Split parity run" serves the quarter goal."""
+    for title in ("Investor call", "License review", "Gym"):
+        page.get_by_label("New task").fill(title)
+        page.get_by_role("button", name="Add", exact=True).click()
+        expect(page.locator(".task", has_text=title)).to_be_visible()
+    expect(page.locator(".focus h2")).to_have_text("Choose today’s top three")
+    for title in ("Split parity run", "Investor call", "License review"):
+        page.get_by_role("button", name=f"Add to top three: {title}").click()
+        settle(page)
+    expect(page.locator(".focus h2")).to_have_text("Split parity run")
+    expect(page.locator(".focus .trace a")).to_have_count(2)
+
+    page.get_by_role("button", name="Add to top three: Gym").click()
+    page.get_by_role("button", name="2. Investor call").click()
+    settle(page)
+    top = page.locator(".kicker.sub-k", has_text="Top three")
+    expect(top).to_be_visible()
+    expect(page.get_by_role("button", name="Remove from top three: Gym")).to_be_visible()
+    expect(page.get_by_role("button", name="Add to top three: Investor call")).to_be_visible()
+    shot(page, "today-focus")
+
+    page.locator(".focus .trace a", has_text="Make Tradl").click()
+    expect(page.locator(".pagehead h1")).to_have_text("This year")
+
+    go(page, "today")
+    page.locator(".task", has_text="Gym").locator(".taskbody").click()
+    expect(page.locator("dialog .untied")).to_be_visible()

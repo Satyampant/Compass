@@ -38,11 +38,14 @@ export interface Task {
   done_at: string | null
   goal_id: number | null
   tag: Tag | null
+  top_rank: number | null
   version: number
 }
 
 export interface Today {
   date: string
+  focus: { task: Task; trace: TraceStep[] } | null
+  top_limit: number
   tasks: Task[]
   revisit: Item[]
   inbox_count: number
@@ -79,6 +82,7 @@ export const api = {
   addTask: (title: string, estimate_min: number, goal_id: number | null = null) => call<Task>('POST', '/v1/tasks', { title, estimate_min, goal_id }),
   editTask: (id: number, patch: Partial<{ title: string; estimate_min: number; done: boolean; planned_date: string; goal_id: number | null }>) =>
     call<Task>('PATCH', `/v1/tasks/${id}`, patch),
+  setTop: (day: string, task_ids: number[]) => call<Task[]>('PUT', `/v1/days/${day}/top-three`, { task_ids }),
   editItem: (id: number, patch: Partial<{ title: string; estimate_min: number; goal_id: number | null; reason: string | null }>) =>
     call<Item>('PATCH', `/v1/learning-items/${id}`, patch),
 }
