@@ -10,6 +10,7 @@ Point backups at the Google Drive folder:
 """
 
 import logging
+import os
 import sqlite3
 import sys
 from datetime import date
@@ -26,8 +27,8 @@ PREFIX = "compass-"
 
 
 def backup_dir(session: Session) -> Path:
-    """Where copies go: the backup_dir setting, or data/backups inside the project."""
-    configured = settings.get(session, "backup_dir")
+    """Where copies go: COMPASS_BACKUP_DIR, the backup_dir setting, or data/backups."""
+    configured = os.environ.get("COMPASS_BACKUP_DIR") or settings.get(session, "backup_dir")
     return Path(configured).expanduser() if configured else db.ROOT / "data" / "backups"
 
 

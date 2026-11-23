@@ -28,6 +28,7 @@ def server(tmp_path_factory):
         "COMPASS_DB_URL": f"sqlite:///{db}",
         "COMPASS_BACKGROUND": "0",
         "COMPASS_GOOGLE": "0",
+        "COMPASS_BACKUP_DIR": str(db.parent / "backups"),
     }
     proc = subprocess.Popen(
         ["uv", "run", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(PORT)],
@@ -47,11 +48,17 @@ def server(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def browser():
+def pw():
+    """One Playwright for the whole run. The sync API allows only one at a time."""
     with sync_playwright() as p:
-        b = p.chromium.launch(channel="chrome", headless=True)
-        yield b
-        b.close()
+        yield p
+
+
+@pytest.fixture(scope="session")
+def browser(pw):
+    b = pw.chromium.launch(channel="chrome", headless=True)
+    yield b
+    b.close()
 
 
 @pytest.fixture
